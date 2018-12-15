@@ -1,0 +1,12 @@
+language: java
+jdk: oraclejdk8
+
+install:
+  - ./mvnw test-compile -DskipTests
+script:
+  - ./mvnw test jacoco:report
+
+notifications:
+  email:
+    on_success: never
+    on_failure: change
