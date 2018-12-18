@@ -1,12 +1,13 @@
 package burp;
 
+import com.github.nscuro.bradamsang.BradamsaNgExtension;
+
 public class BurpExtender implements IBurpExtender {
 
-    private static final String EXTENSION_NAME = "bradamsa-ng";
-
     @Override
-    public void registerExtenderCallbacks(final IBurpExtenderCallbacks callbacks) {
-        callbacks.setExtensionName(EXTENSION_NAME);
+    public void registerExtenderCallbacks(final IBurpExtenderCallbacks extenderCallbacks) {
+        final BradamsaNgExtension extension = new BradamsaNgExtension(extenderCallbacks);
+        extension.registerExtension();
     }
 
 }
