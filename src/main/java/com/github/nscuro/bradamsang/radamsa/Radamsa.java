@@ -20,7 +20,7 @@ public class Radamsa {
         this(new CommandExecutor(), radamsaCommand);
     }
 
-    private Radamsa(final CommandExecutor commandExecutor, final String radamsaCommand) {
+    Radamsa(final CommandExecutor commandExecutor, final String radamsaCommand) {
         this.commandExecutor = commandExecutor;
         this.radamsaCommand = radamsaCommand;
     }
@@ -28,6 +28,10 @@ public class Radamsa {
     public void fuzz(final Parameters parameters) throws RadamsaException {
         if (!isValidRadamsaCommand(radamsaCommand)) {
             throw new RadamsaException(String.format("\"%s\" is not a valid radamsa command", radamsaCommand));
+        } else if (parameters.getBaseValue() == null) {
+            throw new RadamsaException("No baseValue provided");
+        } else if (parameters.getOutputDirectoryPath() == null) {
+            throw new RadamsaException("No output directory path provided");
         }
 
         final List<String> commandLine = new ArrayList<>(commandExecutor.parseCommand(radamsaCommand));
@@ -63,7 +67,7 @@ public class Radamsa {
         }
     }
 
-    private boolean isValidRadamsaCommand(final String command) throws RadamsaException {
+    boolean isValidRadamsaCommand(final String command) throws RadamsaException {
         if (command == null || command.trim().isEmpty()) {
             return false;
         } else if (!command.matches("^.*radamsa(\\.[a-zA-Z]+)?$")) {
@@ -77,8 +81,8 @@ public class Radamsa {
         try {
             radamsaVersion = commandExecutor
                     .execute(versionCommand)
-                    .filter(output -> output.toLowerCase().contains("radamsa"))
-                    .map(output -> output.split(" ", 2))
+                    .filter(output -> output.toLowerCase().startsWith("radamsa"))
+                    .map(output -> output.split(" ", 3))
                     .map(outputParts -> outputParts[1]);
         } catch (IOException e) {
             throw new RadamsaException(e);
