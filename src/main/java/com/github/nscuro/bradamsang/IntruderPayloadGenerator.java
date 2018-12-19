@@ -33,9 +33,9 @@ class IntruderPayloadGenerator implements IIntruderPayloadGenerator {
 
     private final List<File> payloadFiles;
 
-    private boolean firstRun = true;
+    private int currentPayloadFileIndex;
 
-    private int index;
+    private boolean firstRun = true;
 
     IntruderPayloadGenerator(@Nonnull final IBurpExtenderCallbacks extenderCallbacks,
                              @Nonnull final OptionsProvider optionsProvider) {
@@ -54,9 +54,10 @@ class IntruderPayloadGenerator implements IIntruderPayloadGenerator {
 
     @Override
     public boolean hasMorePayloads() {
-        return firstRun || payloadFiles.size() > index;
+        return firstRun || payloadFiles.size() > currentPayloadFileIndex;
     }
 
+    @Nullable
     @Override
     public byte[] getNextPayload(@Nullable final byte[] baseValue) {
         if (baseValue == null) {
@@ -66,6 +67,20 @@ class IntruderPayloadGenerator implements IIntruderPayloadGenerator {
         }
 
         if (firstRun) {
+            firstRun = false;
+
+            final Path payloadFilesDirectoryPath = optionsProvider
+                    .getIntruderInputDirectoryPath()
+                    .orElseGet(optionsProvider::getRadamsaOutputDirectoryPath);
+
+            // Make sure the input directory is accessible
+            if (!payloadFilesDirectoryPath.toFile().exists()
+                    || !payloadFilesDirectoryPath.toFile().isDirectory()) {
+                extenderCallbacks.printError(format("Payload input path \"%s\" does not exist or is not a directory", payloadFilesDirectoryPath));
+
+                return null;
+            }
+
             try {
                 generatePayloads(baseValue);
             } catch (RadamsaException e) {
@@ -74,29 +89,13 @@ class IntruderPayloadGenerator implements IIntruderPayloadGenerator {
                 return null;
             }
 
-            final Path payloadFilesDirectoryPath = optionsProvider
-                    .getIntruderInputDirectoryPath()
-                    .orElseGet(optionsProvider::getRadamsaOutputDirectoryPath);
-
-            if (!payloadFilesDirectoryPath.toFile().exists()
-                    || !payloadFilesDirectoryPath.toFile().isDirectory()) {
-                extenderCallbacks.printError(format("Payload input path \"%s\" does not exist or is not a directory", payloadFilesDirectoryPath));
-
-                firstRun = false;
-
-                return null;
-            }
-
-            final File[] outputFiles = payloadFilesDirectoryPath
-                    .toFile()
-                    .listFiles((dir, name) -> name.matches("^radamsa_[0-9]+\\.out$"));
-
+            // Collect all payload files from input directory
             Optional
-                    .ofNullable(outputFiles)
+                    .of(payloadFilesDirectoryPath)
+                    .map(Path::toFile)
+                    .map(directory -> directory.listFiles((dir, name) -> name.matches("^radamsa_[0-9]+\\.out$")))
                     .map(Arrays::asList)
                     .ifPresent(payloadFiles::addAll);
-
-            firstRun = false;
 
             if (payloadFiles.isEmpty()) {
                 extenderCallbacks.printError(format("No payload files have been found in \"%s\". Please check your path settings", payloadFilesDirectoryPath));
@@ -105,7 +104,7 @@ class IntruderPayloadGenerator implements IIntruderPayloadGenerator {
             }
         }
 
-        final File file = payloadFiles.get(index);
+        final File file = payloadFiles.get(currentPayloadFileIndex);
         try {
             byte[] payload = Files.readAllBytes(file.toPath());
 
@@ -113,13 +112,13 @@ class IntruderPayloadGenerator implements IIntruderPayloadGenerator {
                 extenderCallbacks.printError(format("\"%s\" was not deleted", file));
             }
 
-            index++;
+            currentPayloadFileIndex++;
 
             return payload;
         } catch (IOException e) {
             BurpUtils.printStackTrace(extenderCallbacks, e);
 
-            index++;
+            currentPayloadFileIndex++;
 
             return null;
         }
@@ -132,10 +131,10 @@ class IntruderPayloadGenerator implements IIntruderPayloadGenerator {
 
         // Reset payload list
         payloadFiles.clear();
-        index = 0;
+        currentPayloadFileIndex = 0;
     }
 
-    private void generatePayloads(final byte[] baseValue) throws RadamsaException {
+    private void generatePayloads(@Nonnull final byte[] baseValue) throws RadamsaException {
         LOGGER.debug("Generating payloads");
 
         final Parameters parameters = Parameters
