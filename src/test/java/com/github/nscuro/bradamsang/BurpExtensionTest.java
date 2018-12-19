@@ -31,6 +31,8 @@ class BurpExtensionTest {
         verify(extenderCallbacksMock).addSuiteTab(any(Tab.class));
 
         verify(extenderCallbacksMock).registerIntruderPayloadGeneratorFactory(any(IntruderPayloadGeneratorFactory.class));
+
+        verify(extenderCallbacksMock).registerIntruderPayloadProcessor(any(IntruderPayloadProcessor.class));
     }
 
 }
