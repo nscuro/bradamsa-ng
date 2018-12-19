@@ -15,7 +15,7 @@ public class BradamsaNgExtension {
     public void registerExtension() {
         extenderCallbacks.setExtensionName(EXTENSION_NAME);
 
-        extenderCallbacks.registerIntruderPayloadGeneratorFactory(new IntruderPayloadGeneratorFactory());
+        extenderCallbacks.registerIntruderPayloadGeneratorFactory(new IntruderPayloadGeneratorFactory(extenderCallbacks));
     }
 
 }

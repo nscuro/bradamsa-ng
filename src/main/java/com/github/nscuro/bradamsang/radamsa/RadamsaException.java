@@ -10,4 +10,8 @@ public class RadamsaException extends Exception {
         super(cause);
     }
 
+    RadamsaException(final String message, final Throwable cause) {
+        super(message, cause);
+    }
+
 }

@@ -15,6 +15,6 @@ public class Parameters {
 
     private final byte[] baseValue;
 
-    private final Path radamsaOutputDirectoryPath;
+    private final Path outputDirectoryPath;
 
 }

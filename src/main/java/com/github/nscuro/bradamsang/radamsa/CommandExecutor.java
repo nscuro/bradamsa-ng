@@ -14,6 +14,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import static java.lang.String.format;
+
 class CommandExecutor {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(CommandExecutor.class);
@@ -30,9 +32,15 @@ class CommandExecutor {
     }
 
     Optional<String> execute(final List<String> command, @Nullable final byte[] stdinData) throws IOException {
-        final Process process = new ProcessBuilder(command).start();
+        LOGGER.debug("Executing command \"{}\"", command);
+
+        final Process process = new ProcessBuilder(command)
+                .redirectErrorStream(true)
+                .start();
 
         if (stdinData != null) {
+            LOGGER.debug("Piping {} bytes to process stdin", stdinData.length);
+
             try (final OutputStream processStdin = process.getOutputStream()) {
                 IOUtils.write(stdinData, processStdin);
             }
@@ -42,17 +50,19 @@ class CommandExecutor {
              final BufferedReader bufferedReader = new BufferedReader(inputStreamReader)) {
 
             final int exitCode = process.waitFor();
-
-            if (exitCode != 0) {
-                LOGGER.error("Command \"{}\" returned with status {}", command, exitCode);
-            }
+            LOGGER.debug("Command \"{}\" exited with status {}", command, exitCode);
 
             final StringBuilder processOutput = new StringBuilder();
 
+            LOGGER.debug("Reading output from command \"{}\"", command);
             for (String line; (line = bufferedReader.readLine()) != null; ) {
                 processOutput
                         .append(line)
                         .append(System.lineSeparator());
+            }
+
+            if (exitCode != 0) {
+                throw new IOException(format("Command \"%s\" returned with status %d. Output was:\n%s", command, exitCode, processOutput));
             }
 
             return Optional
