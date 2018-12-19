@@ -1,15 +1,16 @@
 package com.github.nscuro.bradamsang;
 
 import burp.IBurpExtenderCallbacks;
-import com.github.nscuro.bradamsang.ui.Tab;
+
+import javax.annotation.Nonnull;
 
 public class BurpExtension {
 
-    public static final String EXTENSION_NAME = "bradamsa-ng";
+    static final String EXTENSION_NAME = "bradamsa-ng";
 
     private final IBurpExtenderCallbacks extenderCallbacks;
 
-    public BurpExtension(final IBurpExtenderCallbacks extenderCallbacks) {
+    public BurpExtension(@Nonnull final IBurpExtenderCallbacks extenderCallbacks) {
         this.extenderCallbacks = extenderCallbacks;
     }
 

@@ -14,7 +14,7 @@ class IntruderPayloadGeneratorFactory implements IIntruderPayloadGeneratorFactor
 
     private final IBurpExtenderCallbacks extenderCallbacks;
 
-    IntruderPayloadGeneratorFactory(final IBurpExtenderCallbacks extenderCallbacks) {
+    IntruderPayloadGeneratorFactory(@Nonnull final IBurpExtenderCallbacks extenderCallbacks) {
         this.extenderCallbacks = extenderCallbacks;
     }
 
@@ -24,7 +24,7 @@ class IntruderPayloadGeneratorFactory implements IIntruderPayloadGeneratorFactor
     }
 
     @Override
-    public IIntruderPayloadGenerator createNewInstance(final IIntruderAttack intruderAttack) {
+    public IIntruderPayloadGenerator createNewInstance(@Nonnull final IIntruderAttack intruderAttack) {
         final OptionsProvider optionsProvider = new OptionsProvider() {
             @Nonnull
             @Override

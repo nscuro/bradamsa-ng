@@ -8,6 +8,7 @@ import com.github.nscuro.bradamsang.radamsa.RadamsaException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
@@ -35,8 +36,8 @@ class IntruderPayloadGenerator implements IIntruderPayloadGenerator {
 
     private int index;
 
-    IntruderPayloadGenerator(final IBurpExtenderCallbacks extenderCallbacks,
-                             final OptionsProvider optionsProvider) {
+    IntruderPayloadGenerator(@Nonnull final IBurpExtenderCallbacks extenderCallbacks,
+                             @Nonnull final OptionsProvider optionsProvider) {
         this(extenderCallbacks, optionsProvider, new Radamsa(optionsProvider.getRadamsaCommand()), new ArrayList<>());
     }
 

@@ -1,19 +1,18 @@
-package com.github.nscuro.bradamsang.ui;
+package com.github.nscuro.bradamsang;
 
 import burp.IBurpExtenderCallbacks;
 import burp.ITab;
-import com.github.nscuro.bradamsang.BurpExtension;
 
 import javax.swing.JButton;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import java.awt.Component;
 
-public class Tab extends JPanel implements ITab {
+class Tab extends JPanel implements ITab {
 
     private final IBurpExtenderCallbacks extenderCallbacks;
 
-    public Tab(final IBurpExtenderCallbacks extenderCallbacks) {
+    Tab(final IBurpExtenderCallbacks extenderCallbacks) {
         this.extenderCallbacks = extenderCallbacks;
     }
 
