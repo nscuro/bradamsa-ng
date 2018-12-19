@@ -2,13 +2,13 @@ package com.github.nscuro.bradamsang;
 
 import burp.IBurpExtenderCallbacks;
 
-public class BradamsaNgExtension {
+public class BurpExtension {
 
-    static final String EXTENSION_NAME = "bradamsa-ng";
+    public static final String EXTENSION_NAME = "bradamsa-ng";
 
     private final IBurpExtenderCallbacks extenderCallbacks;
 
-    public BradamsaNgExtension(final IBurpExtenderCallbacks extenderCallbacks) {
+    public BurpExtension(final IBurpExtenderCallbacks extenderCallbacks) {
         this.extenderCallbacks = extenderCallbacks;
     }
 

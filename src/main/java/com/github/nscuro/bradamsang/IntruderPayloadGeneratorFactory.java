@@ -20,7 +20,7 @@ class IntruderPayloadGeneratorFactory implements IIntruderPayloadGeneratorFactor
 
     @Override
     public String getGeneratorName() {
-        return BradamsaNgExtension.EXTENSION_NAME;
+        return BurpExtension.EXTENSION_NAME;
     }
 
     @Override

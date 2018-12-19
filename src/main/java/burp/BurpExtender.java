@@ -1,12 +1,12 @@
 package burp;
 
-import com.github.nscuro.bradamsang.BradamsaNgExtension;
+import com.github.nscuro.bradamsang.BurpExtension;
 
 public class BurpExtender implements IBurpExtender {
 
     @Override
     public void registerExtenderCallbacks(final IBurpExtenderCallbacks extenderCallbacks) {
-        final BradamsaNgExtension extension = new BradamsaNgExtension(extenderCallbacks);
+        final BurpExtension extension = new BurpExtension(extenderCallbacks);
 
         extension.registerExtension();
     }
