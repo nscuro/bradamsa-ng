@@ -29,7 +29,7 @@ class IntruderPayloadGeneratorFactory implements IIntruderPayloadGeneratorFactor
             @Nonnull
             @Override
             public String getRadamsaCommand() {
-                return "wsl radamsa";
+                return "wsl -d kali-linux radamsa";
             }
 
             @Override

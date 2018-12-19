@@ -13,6 +13,7 @@ import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -73,9 +74,20 @@ class IntruderPayloadGenerator implements IIntruderPayloadGenerator {
                 return null;
             }
 
-            final File[] outputFiles = optionsProvider
+            final Path payloadFilesDirectoryPath = optionsProvider
                     .getIntruderInputDirectoryPath()
-                    .orElseGet(optionsProvider::getRadamsaOutputDirectoryPath)
+                    .orElseGet(optionsProvider::getRadamsaOutputDirectoryPath);
+
+            if (!payloadFilesDirectoryPath.toFile().exists()
+                    || !payloadFilesDirectoryPath.toFile().isDirectory()) {
+                extenderCallbacks.printError(format("Payload input path \"%s\" does not exist or is not a directory", payloadFilesDirectoryPath));
+
+                firstRun = false;
+
+                return null;
+            }
+
+            final File[] outputFiles = payloadFilesDirectoryPath
                     .toFile()
                     .listFiles((dir, name) -> name.matches("^radamsa_[0-9]+\\.out$"));
 
@@ -85,6 +97,12 @@ class IntruderPayloadGenerator implements IIntruderPayloadGenerator {
                     .ifPresent(payloadFiles::addAll);
 
             firstRun = false;
+
+            if (payloadFiles.isEmpty()) {
+                extenderCallbacks.printError(format("No payload files have been found in \"%s\". Please check your path settings", payloadFilesDirectoryPath));
+
+                return null;
+            }
         }
 
         final File file = payloadFiles.get(index);
@@ -110,7 +128,6 @@ class IntruderPayloadGenerator implements IIntruderPayloadGenerator {
     @Override
     public void reset() {
         // Delete all remaining payload files
-        //noinspection ResultOfMethodCallIgnored
         payloadFiles.forEach(File::delete);
 
         // Reset payload list
