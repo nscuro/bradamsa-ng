@@ -11,11 +11,13 @@ public class BurpExtension {
     public void registerExtension(@Nonnull final IBurpExtenderCallbacks extenderCallbacks) {
         extenderCallbacks.setExtensionName(EXTENSION_NAME);
 
-        extenderCallbacks.addSuiteTab(new Tab(extenderCallbacks));
+        final Tab tab = new Tab(extenderCallbacks);
 
-        extenderCallbacks.registerIntruderPayloadGeneratorFactory(new IntruderPayloadGeneratorFactory(extenderCallbacks));
+        extenderCallbacks.addSuiteTab(tab);
 
-        extenderCallbacks.registerIntruderPayloadProcessor(new IntruderPayloadProcessor(extenderCallbacks));
+        extenderCallbacks.registerIntruderPayloadGeneratorFactory(new IntruderPayloadGeneratorFactory(extenderCallbacks, tab));
+
+        extenderCallbacks.registerIntruderPayloadProcessor(new IntruderPayloadProcessor(extenderCallbacks, tab));
     }
 
 }

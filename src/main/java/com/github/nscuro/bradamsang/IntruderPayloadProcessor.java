@@ -10,8 +10,12 @@ class IntruderPayloadProcessor implements IIntruderPayloadProcessor {
 
     private final IBurpExtenderCallbacks extenderCallbacks;
 
-    IntruderPayloadProcessor(final IBurpExtenderCallbacks extenderCallbacks) {
+    private final OptionsProvider optionsProvider;
+
+    IntruderPayloadProcessor(final IBurpExtenderCallbacks extenderCallbacks,
+                             final OptionsProvider optionsProvider) {
         this.extenderCallbacks = extenderCallbacks;
+        this.optionsProvider = optionsProvider;
     }
 
     @Nonnull
