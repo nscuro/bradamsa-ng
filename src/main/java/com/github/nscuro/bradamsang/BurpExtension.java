@@ -8,13 +8,7 @@ public class BurpExtension {
 
     static final String EXTENSION_NAME = "bradamsa-ng";
 
-    private final IBurpExtenderCallbacks extenderCallbacks;
-
-    public BurpExtension(@Nonnull final IBurpExtenderCallbacks extenderCallbacks) {
-        this.extenderCallbacks = extenderCallbacks;
-    }
-
-    public void registerExtension() {
+    public void registerExtension(@Nonnull final IBurpExtenderCallbacks extenderCallbacks) {
         extenderCallbacks.setExtensionName(EXTENSION_NAME);
 
         extenderCallbacks.addSuiteTab(new Tab(extenderCallbacks));
