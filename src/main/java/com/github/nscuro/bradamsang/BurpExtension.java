@@ -1,6 +1,7 @@
 package com.github.nscuro.bradamsang;
 
 import burp.IBurpExtenderCallbacks;
+import com.github.nscuro.bradamsang.ui.Tab;
 
 public class BurpExtension {
 
@@ -14,6 +15,8 @@ public class BurpExtension {
 
     public void registerExtension() {
         extenderCallbacks.setExtensionName(EXTENSION_NAME);
+
+        extenderCallbacks.addSuiteTab(new Tab(extenderCallbacks));
 
         extenderCallbacks.registerIntruderPayloadGeneratorFactory(new IntruderPayloadGeneratorFactory(extenderCallbacks));
     }
