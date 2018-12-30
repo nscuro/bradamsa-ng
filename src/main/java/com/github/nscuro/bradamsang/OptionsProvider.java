@@ -9,7 +9,7 @@ public interface OptionsProvider {
     @Nonnull
     String getRadamsaCommand();
 
-    int getCount();
+    Optional<Integer> getCount();
 
     @Nonnull
     Optional<Long> getSeed();

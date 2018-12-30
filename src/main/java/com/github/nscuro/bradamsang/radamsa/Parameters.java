@@ -9,7 +9,7 @@ import java.nio.file.Path;
 @Builder
 public class Parameters {
 
-    private final int count;
+    private final Integer count;
 
     private final Long seed;
 

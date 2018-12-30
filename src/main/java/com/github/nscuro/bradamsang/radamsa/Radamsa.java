@@ -37,7 +37,7 @@ public class Radamsa {
         final List<String> commandLine = new ArrayList<>(commandExecutor.parseCommand(radamsaCommand));
 
         Optional
-                .of(parameters.getCount())
+                .ofNullable(parameters.getCount())
                 .filter(count -> count > 0)
                 .ifPresent(count -> {
                     commandLine.add("-n");
