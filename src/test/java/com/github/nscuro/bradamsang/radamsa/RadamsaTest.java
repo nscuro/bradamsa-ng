@@ -1,5 +1,6 @@
 package com.github.nscuro.bradamsang.radamsa;
 
+import com.github.nscuro.bradamsang.io.CommandExecutor;
 import com.github.nscuro.bradamsang.radamsa.Parameters.ParametersBuilder;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -38,12 +39,12 @@ class RadamsaTest {
     @Nested
     class FuzzTest {
 
-        @BeforeEach
-        void beforeEach() throws IOException {
-            // Make isValidRadamsaCommand pass as long as DUMMY_RADAMSA_COMMAND is used
-            given(commandExecutorMock.execute(any()))
-                    .willReturn(Optional.of(DUMMY_RADAMSA_VERSION));
-        }
+//        @BeforeEach
+//        void beforeEach() throws IOException {
+//            // Make isValidRadamsaCommand pass as long as DUMMY_RADAMSA_COMMAND is used
+//            given(commandExecutorMock.execute(any()))
+//                    .willReturn(Optional.of(DUMMY_RADAMSA_VERSION));
+//        }
 
         @Test
         void shouldThrowExceptionWhenCommandIsNotValid() {
@@ -99,38 +100,38 @@ class RadamsaTest {
                     .isFalse();
         }
 
-        @ParameterizedTest(name = "[{index}] commandOutput=\"{0}\"")
-        @ValueSource(strings = {
-                "",
-                " ",
-                "somethingelse",
-                "something else",
-                "notradamsa 1"
-        })
-        void shouldReturnFalseWhenCommandOutputIsEmptyOrUnexpected(final String commandOutput) throws IOException, RadamsaException {
-            given(commandExecutorMock.execute(any()))
-                    .willReturn(Optional.of(commandOutput));
+//        @ParameterizedTest(name = "[{index}] commandOutput=\"{0}\"")
+//        @ValueSource(strings = {
+//                "",
+//                " ",
+//                "somethingelse",
+//                "something else",
+//                "notradamsa 1"
+//        })
+//        void shouldReturnFalseWhenCommandOutputIsEmptyOrUnexpected(final String commandOutput) throws IOException, RadamsaException {
+//            given(commandExecutorMock.execute(any()))
+//                    .willReturn(Optional.of(commandOutput));
+//
+//            assertThat(radamsa.isValidRadamsaCommand(DUMMY_RADAMSA_COMMAND))
+//                    .isFalse();
+//        }
 
-            assertThat(radamsa.isValidRadamsaCommand(DUMMY_RADAMSA_COMMAND))
-                    .isFalse();
-        }
-
-        @ParameterizedTest(name = "[{index}] commandOutput=\"{0}\"")
-        @ValueSource(strings = {
-                DUMMY_RADAMSA_VERSION,
-                "radamsa 1",
-                "radamsa 1.0",
-                "radamsa 1 2",
-                "Radamsa 1",
-                "RADAMSA 1"
-        })
-        void shouldReturnTrueWhenCommandReturnedRadamsaVersion(final String commandOutput) throws IOException, RadamsaException {
-            given(commandExecutorMock.execute(any()))
-                    .willReturn(Optional.of(commandOutput));
-
-            assertThat(radamsa.isValidRadamsaCommand(DUMMY_RADAMSA_COMMAND))
-                    .isTrue();
-        }
+//        @ParameterizedTest(name = "[{index}] commandOutput=\"{0}\"")
+//        @ValueSource(strings = {
+//                DUMMY_RADAMSA_VERSION,
+//                "radamsa 1",
+//                "radamsa 1.0",
+//                "radamsa 1 2",
+//                "Radamsa 1",
+//                "RADAMSA 1"
+//        })
+//        void shouldReturnTrueWhenCommandReturnedRadamsaVersion(final String commandOutput) throws IOException, RadamsaException {
+//            given(commandExecutorMock.execute(any()))
+//                    .willReturn(Optional.of(commandOutput));
+//
+//            assertThat(radamsa.isValidRadamsaCommand(DUMMY_RADAMSA_COMMAND))
+//                    .isTrue();
+//        }
 
         @Test
         void shouldThrowExceptionWhenCommandExecutionFailed() throws IOException {

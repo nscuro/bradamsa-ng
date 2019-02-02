@@ -2,6 +2,7 @@ package com.github.nscuro.bradamsang;
 
 import burp.IBurpExtenderCallbacks;
 import burp.IIntruderPayloadGenerator;
+import com.github.nscuro.bradamsang.io.WslCommandExecutor;
 import com.github.nscuro.bradamsang.radamsa.Parameters;
 import com.github.nscuro.bradamsang.radamsa.Radamsa;
 import com.github.nscuro.bradamsang.radamsa.RadamsaException;
@@ -38,8 +39,9 @@ class IntruderPayloadGenerator implements IIntruderPayloadGenerator {
     private boolean firstRun = true;
 
     IntruderPayloadGenerator(@Nonnull final IBurpExtenderCallbacks extenderCallbacks,
-                             @Nonnull final OptionsProvider optionsProvider) {
-        this(extenderCallbacks, optionsProvider, new Radamsa(optionsProvider.getRadamsaCommand()), new ArrayList<>());
+                             @Nonnull final OptionsProvider optionsProvider,
+                             @Nonnull final Radamsa radamsa) {
+        this(extenderCallbacks, optionsProvider, radamsa, new ArrayList<>());
     }
 
     private IntruderPayloadGenerator(final IBurpExtenderCallbacks extenderCallbacks,

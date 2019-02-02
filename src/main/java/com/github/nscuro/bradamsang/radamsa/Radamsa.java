@@ -1,5 +1,7 @@
 package com.github.nscuro.bradamsang.radamsa;
 
+import com.github.nscuro.bradamsang.io.CommandExecutor;
+import com.github.nscuro.bradamsang.io.ExecutionResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -7,6 +9,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+
+import static java.lang.String.format;
 
 public class Radamsa {
 
@@ -16,25 +20,21 @@ public class Radamsa {
 
     private final String radamsaCommand;
 
-    public Radamsa(final String radamsaCommand) {
-        this(new CommandExecutor(), radamsaCommand);
-    }
-
-    Radamsa(final CommandExecutor commandExecutor, final String radamsaCommand) {
+    public Radamsa(final CommandExecutor commandExecutor, final String radamsaCommand) {
         this.commandExecutor = commandExecutor;
         this.radamsaCommand = radamsaCommand;
     }
 
     public void fuzz(final Parameters parameters) throws RadamsaException {
         if (!isValidRadamsaCommand(radamsaCommand)) {
-            throw new RadamsaException(String.format("\"%s\" is not a valid radamsa command", radamsaCommand));
+            throw new RadamsaException(format("\"%s\" is not a valid radamsa command", radamsaCommand));
         } else if (parameters.getBaseValue() == null) {
             throw new RadamsaException("No baseValue provided");
         } else if (parameters.getOutputDirectoryPath() == null) {
             throw new RadamsaException("No output directory path provided");
         }
 
-        final List<String> commandLine = new ArrayList<>(commandExecutor.parseCommand(radamsaCommand));
+        final List<String> commandLine = new ArrayList<>(CommandExecutor.parseCommand(radamsaCommand));
 
         Optional
                 .ofNullable(parameters.getCount())
@@ -74,13 +74,18 @@ public class Radamsa {
             return false;
         }
 
-        final List<String> versionCommand = commandExecutor.parseCommand(command);
+        final List<String> versionCommand = CommandExecutor.parseCommand(command);
         versionCommand.add("-V");
 
         final Optional<String> radamsaVersion;
         try {
-            radamsaVersion = commandExecutor
-                    .execute(versionCommand)
+            final ExecutionResult executionResult = commandExecutor.execute(versionCommand);
+
+            if (executionResult.getExitCode() != 0) {
+                throw new IOException(format("Failed to verify radamsa command: \"%s\" returned with exit code %d", versionCommand, executionResult.getExitCode()));
+            }
+
+            radamsaVersion = executionResult.getOutput()
                     .filter(output -> output.toLowerCase().startsWith("radamsa"))
                     .map(output -> output.split(" ", 3))
                     .map(outputParts -> outputParts[1]);
@@ -93,7 +98,7 @@ public class Radamsa {
 
             return true;
         } else {
-            LOGGER.debug("Unable to determine version of radamsa");
+            LOGGER.warn("Unable to determine version of radamsa");
 
             return false;
         }

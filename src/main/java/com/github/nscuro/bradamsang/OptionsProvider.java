@@ -20,4 +20,9 @@ public interface OptionsProvider {
     @Nonnull
     Optional<Path> getIntruderInputDirectoryPath();
 
+    boolean isWslModeEnabled();
+
+    @Nonnull
+    Optional<String> getWslDistributionName();
+
 }
