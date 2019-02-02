@@ -1,7 +1,7 @@
 package com.github.nscuro.bradamsang;
 
 import burp.IBurpExtenderCallbacks;
-import com.github.nscuro.bradamsang.ui.Tab;
+import com.github.nscuro.bradamsang.ui.SettingsTab;
 
 import javax.annotation.Nonnull;
 
@@ -12,7 +12,7 @@ public class BurpExtension {
     public void registerExtension(@Nonnull final IBurpExtenderCallbacks extenderCallbacks) {
         extenderCallbacks.setExtensionName(EXTENSION_NAME);
 
-        final Tab tab = new Tab(extenderCallbacks);
+        final SettingsTab tab = new SettingsTab(extenderCallbacks);
 
         extenderCallbacks.addSuiteTab(tab);
 

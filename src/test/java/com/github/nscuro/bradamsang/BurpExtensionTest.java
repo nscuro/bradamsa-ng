@@ -1,7 +1,7 @@
 package com.github.nscuro.bradamsang;
 
 import burp.IBurpExtenderCallbacks;
-import com.github.nscuro.bradamsang.ui.Tab;
+import com.github.nscuro.bradamsang.ui.SettingsTab;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -29,7 +29,7 @@ class BurpExtensionTest {
 
         verify(extenderCallbacksMock).setExtensionName(eq(BurpExtension.EXTENSION_NAME));
 
-        verify(extenderCallbacksMock).addSuiteTab(any(Tab.class));
+        verify(extenderCallbacksMock).addSuiteTab(any(SettingsTab.class));
 
         verify(extenderCallbacksMock).registerIntruderPayloadGeneratorFactory(any(IntruderPayloadGeneratorFactory.class));
 
