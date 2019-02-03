@@ -23,6 +23,8 @@ public class WslHelper {
 
     private static final String COMMAND_WSLPATH = "wslpath";
 
+    private static final String COMMAND_WHERE = "where";
+
     private final NativeCommandExecutor nativeCommandExecutor;
 
     private WslCommandExecutor wslCommandExecutor;
@@ -34,14 +36,9 @@ public class WslHelper {
     }
 
     public boolean isWslAvailable() throws IOException {
-        if (!"Windows 10".equals(System.getProperty("os.name"))) {
-            return false;
-        } else if (nativeCommandExecutor.execute(Arrays.asList("where", COMMAND_WSL)).getExitCode() != 0
-                || nativeCommandExecutor.execute(Arrays.asList("where", COMMAND_WSLCONFIG)).getExitCode() != 0) {
-            return false;
-        }
-
-        return true;
+        return "Windows 10".equals(System.getProperty("os.name"))
+                && nativeCommandExecutor.execute(Arrays.asList(COMMAND_WHERE, COMMAND_WSL)).getExitCode() == 0
+                && nativeCommandExecutor.execute(Arrays.asList(COMMAND_WHERE, COMMAND_WSLCONFIG)).getExitCode() == 0;
     }
 
     @Nonnull
@@ -74,7 +71,9 @@ public class WslHelper {
 
     @Nonnull
     public String getWslPathForNativePath(final Path nativePath) throws IOException {
-        if (!nativePath.toFile().exists()) {
+        if (wslCommandExecutor == null) {
+            throw new IllegalStateException("No WslCommandExecutor set");
+        } else if (!nativePath.toFile().exists()) {
             throw new IllegalArgumentException(format("Native path \"%s\" does not exist", nativePath));
         }
 
