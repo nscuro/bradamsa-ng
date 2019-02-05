@@ -3,6 +3,7 @@ package com.github.nscuro.bradamsang.ui;
 import burp.IBurpExtenderCallbacks;
 import burp.ITab;
 import com.github.nscuro.bradamsang.BurpExtension;
+import com.github.nscuro.bradamsang.BurpUtils;
 import com.github.nscuro.bradamsang.OptionsProvider;
 import com.github.nscuro.bradamsang.io.NativeCommandExecutor;
 import com.github.nscuro.bradamsang.io.WslCommandExecutor;
@@ -27,6 +28,8 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Optional;
+
+import static com.github.nscuro.bradamsang.ui.DocumentChangedListener.addDocumentChangedListener;
 
 public class SettingsTab implements ITab, OptionsProvider, ActionListener, ItemListener, ChangeListener, DocumentChangedListener {
 
@@ -86,34 +89,31 @@ public class SettingsTab implements ITab, OptionsProvider, ActionListener, ItemL
         customSeedCheckBox.addItemListener(this);
 
         // Register document changed listeners
-        radamsaCommandTextField.getDocument().addDocumentListener(this);
-        radamsaOutputDirTextField.getDocument().addDocumentListener(this);
-        intruderInputDirTextField.getDocument().addDocumentListener(this);
-        customSeedTextField.getDocument().addDocumentListener(this);
+        addDocumentChangedListener(radamsaCommandTextField, this);
+        addDocumentChangedListener(radamsaOutputDirTextField, this);
+        addDocumentChangedListener(intruderInputDirTextField, this);
+        addDocumentChangedListener(customSeedTextField, this);
 
         // Setup spinner for payload count
         payloadCountSpinner.setModel(new SpinnerNumberModel(1, 1, 100, 1));
         payloadCountSpinner.addChangeListener(this);
 
-        // Disallow enabling of WSL mode when not running on Windows 10
         try {
-            if (wslHelper.isWslAvailable()) {
-                wslAvailable = true;
+            wslAvailable = wslHelper.isWslAvailable();
+
+            if (wslAvailable) {
+                wslDistroComboBox.addItemListener(this);
+
+                enableWslModeCheckBox.setEnabled(true);
 
                 wslHelper
                         .getInstalledDistros()
                         .forEach(wslDistroComboBox::addItem);
-
-                wslDistroComboBox.setEnabled(true);
-                wslDistroComboBox.addItemListener(this);
-
-                enableWslModeCheckBox.setEnabled(true);
             }
         } catch (IOException e) {
-            extenderCallbacks.printError(e.toString());
+            BurpUtils.printStackTrace(extenderCallbacks, e);
         }
 
-        // Set default radamsa output dir
         locateRadamsaExecutable()
                 .ifPresent(radamsaCommandTextField::setText);
 
@@ -140,7 +140,7 @@ public class SettingsTab implements ITab, OptionsProvider, ActionListener, ItemL
         if (useCustomSeed) {
             return Optional
                     .of(customSeedTextField.getText())
-                    .filter(seedText -> seedText.matches("^(?:\\\\d+|)$"))
+                    .filter(seedText -> seedText.matches("^(?:\\d+|)$"))
                     .map(Long::parseLong);
         } else {
             return Optional.empty();
@@ -180,13 +180,29 @@ public class SettingsTab implements ITab, OptionsProvider, ActionListener, ItemL
 
     @Override
     public void actionPerformed(final ActionEvent actionEvent) {
-        if (actionEvent.getSource() == intruderInputDirButton) {
+        if (actionEvent.getSource() == radamsaCommandButton) {
+            final JFileChooser fc = new JFileChooser();
+            fc.setFileSelectionMode(JFileChooser.FILES_ONLY);
+
+            if (fc.showOpenDialog(panel1) == JFileChooser.APPROVE_OPTION) {
+                radamsaCommandTextField.setText(fc.getSelectedFile().toString());
+            }
+        } else if (actionEvent.getSource() == radamsaOutputDirButton) {
             final JFileChooser fc = new JFileChooser();
             fc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
 
-            final int returnVal = fc.showOpenDialog(panel1);
+            if (fc.showOpenDialog(panel1) == JFileChooser.APPROVE_OPTION) {
+                radamsaOutputDirTextField.setText(fc.getSelectedFile().toString());
 
-            if (returnVal == JFileChooser.APPROVE_OPTION) {
+                if (!wslModeEnabled) {
+                    intruderInputDirTextField.setText(fc.getSelectedFile().toString());
+                }
+            }
+        } else if (actionEvent.getSource() == intruderInputDirButton) {
+            final JFileChooser fc = new JFileChooser();
+            fc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+
+            if (fc.showOpenDialog(panel1) == JFileChooser.APPROVE_OPTION) {
                 final String path = fc.getSelectedFile().toString();
                 intruderInputDirTextField.setText(path);
 
@@ -194,7 +210,7 @@ public class SettingsTab implements ITab, OptionsProvider, ActionListener, ItemL
                     try {
                         radamsaOutputDirTextField.setText(wslHelper.getWslPathForNativePath(Paths.get(path)));
                     } catch (IOException e) {
-                        extenderCallbacks.printOutput(e.toString());
+                        BurpUtils.printStackTrace(extenderCallbacks, e);
                     }
                 }
             }
@@ -216,16 +232,25 @@ public class SettingsTab implements ITab, OptionsProvider, ActionListener, ItemL
             useCustomSeed = (itemEvent.getStateChange() == ItemEvent.SELECTED);
 
             customSeedTextField.setEnabled(useCustomSeed);
-        } else if (itemEvent.getItemSelectable() == wslDistroComboBox) {
-            if (itemEvent.getStateChange() == ItemEvent.SELECTED) {
-                wslHelper.setWslCommandExecutor(new WslCommandExecutor(String.valueOf(itemEvent.getItem())));
+        } else if (itemEvent.getItemSelectable() == wslDistroComboBox
+                && itemEvent.getStateChange() == ItemEvent.SELECTED) {
+            final String distroName = String.valueOf(itemEvent.getItem());
+
+            if (!"null".equals(distroName) && !distroName.isEmpty()) {
+                wslHelper.setWslCommandExecutor(new WslCommandExecutor(distroName));
             }
         }
     }
 
     @Override
     public void onDocumentChanged(final DocumentEvent documentEvent, @Nullable final String newText) {
-        // TODO: Validate contents
+        if (documentEvent.getDocument() == radamsaCommandTextField.getDocument()) {
+            if (isValidRadamsaCommand(newText)) {
+                radamsaCommandTextField.setForeground(Color.GREEN);
+            } else {
+                radamsaCommandTextField.setForeground(Color.RED);
+            }
+        }
     }
 
     @Override
@@ -255,6 +280,23 @@ public class SettingsTab implements ITab, OptionsProvider, ActionListener, ItemL
         return Optional.empty();
     }
 
+    private boolean isValidRadamsaCommand(@Nullable final String radamsaCommand) {
+        if (radamsaCommand == null || !radamsaCommand.matches("^.*radamsa(?:\\.[A-Za-z]{1,3})?$")) {
+            return false;
+        }
+
+        if (wslModeEnabled && wslAvailable) {
+            try {
+                return wslHelper.isCommandInWslPath(radamsaCommand)
+                        || wslHelper.isExistingFile(radamsaCommand);
+            } catch (IOException e) {
+                return false;
+            }
+        } else {
+            return new File(radamsaCommand).exists();
+        }
+    }
+
     {
 // GUI initializer generated by IntelliJ IDEA GUI Designer
 // >>> IMPORTANT!! <<<
@@ -273,7 +315,7 @@ public class SettingsTab implements ITab, OptionsProvider, ActionListener, ItemL
         panel1 = new JPanel();
         panel1.setLayout(new GridLayoutManager(5, 1, new Insets(10, 10, 10, 10), -1, -1));
         final JPanel panel2 = new JPanel();
-        panel2.setLayout(new GridLayoutManager(3, 3, new Insets(0, 5, 0, 5), -1, -1));
+        panel2.setLayout(new GridLayoutManager(2, 3, new Insets(0, 5, 0, 5), -1, -1));
         panel1.add(panel2, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null, 0, false));
         panel2.setBorder(BorderFactory.createTitledBorder("General"));
         final JLabel label1 = new JLabel();
@@ -292,9 +334,6 @@ public class SettingsTab implements ITab, OptionsProvider, ActionListener, ItemL
         radamsaOutputDirButton = new JButton();
         radamsaOutputDirButton.setText("...");
         panel2.add(radamsaOutputDirButton, new GridConstraints(1, 2, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
-        enableWslModeCheckBox = new JCheckBox();
-        enableWslModeCheckBox.setText("Enable WSL mode");
-        panel2.add(enableWslModeCheckBox, new GridConstraints(2, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
         final Spacer spacer1 = new Spacer();
         panel1.add(spacer1, new GridConstraints(4, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_VERTICAL, 1, GridConstraints.SIZEPOLICY_WANT_GROW, null, null, null, 0, false));
         final JPanel panel3 = new JPanel();
@@ -330,15 +369,18 @@ public class SettingsTab implements ITab, OptionsProvider, ActionListener, ItemL
         customSeedCheckBox.setText("Custom");
         panel4.add(customSeedCheckBox, new GridConstraints(0, 2, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
         final JPanel panel5 = new JPanel();
-        panel5.setLayout(new GridLayoutManager(1, 2, new Insets(0, 0, 0, 0), -1, -1));
+        panel5.setLayout(new GridLayoutManager(2, 2, new Insets(0, 0, 0, 0), -1, -1));
         panel1.add(panel5, new GridConstraints(3, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null, 0, false));
         panel5.setBorder(BorderFactory.createTitledBorder("WSL"));
         final JLabel label6 = new JLabel();
         label6.setText("Distribution:");
-        panel5.add(label6, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        panel5.add(label6, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
         wslDistroComboBox = new JComboBox();
         wslDistroComboBox.setEnabled(false);
-        panel5.add(wslDistroComboBox, new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        panel5.add(wslDistroComboBox, new GridConstraints(1, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        enableWslModeCheckBox = new JCheckBox();
+        enableWslModeCheckBox.setText("Enable WSL mode");
+        panel5.add(enableWslModeCheckBox, new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
     }
 
     /**

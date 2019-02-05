@@ -91,6 +91,32 @@ public class WslHelper {
                 .orElseThrow(IOException::new);
     }
 
+    public boolean isCommandInWslPath(@Nullable final String command) throws IOException {
+        if (wslCommandExecutor == null) {
+            throw new IllegalStateException("No WslCommandExecutor set");
+        } else if (command == null) {
+            return false;
+        }
+
+        final ExecutionResult executionResult = wslCommandExecutor
+                .execute(Arrays.asList("which", command));
+
+        return executionResult.getExitCode() == 0;
+    }
+
+    public boolean isExistingFile(@Nullable final String filePath) throws IOException {
+        if (wslCommandExecutor == null) {
+            throw new IllegalStateException("No WslCommandExecutor set");
+        } else if (filePath == null) {
+            return false;
+        }
+
+        final ExecutionResult executionResult = wslCommandExecutor
+                .execute(Arrays.asList("test", "-f", filePath));
+
+        return executionResult.getExitCode() == 0;
+    }
+
     public void setWslCommandExecutor(final WslCommandExecutor wslCommandExecutor) {
         this.wslCommandExecutor = wslCommandExecutor;
     }
