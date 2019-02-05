@@ -27,6 +27,7 @@ class IntruderPayloadProcessor implements IIntruderPayloadProcessor {
     @Nullable
     @Override
     public byte[] processPayload(final byte[] currentPayload, final byte[] originalPayload, final byte[] baseValue) {
+        // TODO
         return null;
     }
 

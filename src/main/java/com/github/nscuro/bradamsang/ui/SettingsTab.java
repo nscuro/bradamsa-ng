@@ -107,7 +107,7 @@ public class SettingsTab implements ITab, OptionsProvider, ActionListener, ItemL
                 enableWslModeCheckBox.setEnabled(true);
 
                 wslHelper
-                        .getInstalledDistros()
+                        .getAvailableDistributions()
                         .forEach(wslDistroComboBox::addItem);
             }
         } catch (IOException e) {

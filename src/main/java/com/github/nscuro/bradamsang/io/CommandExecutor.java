@@ -21,7 +21,8 @@ public interface CommandExecutor {
     static List<String> parseCommand(final String command) {
         return Arrays
                 .stream(command.split(" "))
-                .filter(commandPart -> !commandPart.trim().isEmpty())
+                .map(String::trim)
+                .filter(commandPart -> !commandPart.isEmpty())
                 .collect(Collectors.toList());
     }
 
