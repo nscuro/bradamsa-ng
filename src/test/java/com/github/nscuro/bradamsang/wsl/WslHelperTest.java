@@ -11,7 +11,10 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 import java.util.Arrays;
 
-import static com.github.nscuro.bradamsang.wsl.WslHelper.*;
+import static com.github.nscuro.bradamsang.wsl.WslHelper.COMMAND_WHERE;
+import static com.github.nscuro.bradamsang.wsl.WslHelper.COMMAND_WSL;
+import static com.github.nscuro.bradamsang.wsl.WslHelper.COMMAND_WSLCONFIG;
+import static com.github.nscuro.bradamsang.wsl.WslHelper.OS_NAME_WINDOWS_10;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;

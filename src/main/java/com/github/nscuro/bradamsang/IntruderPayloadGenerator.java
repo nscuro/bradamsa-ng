@@ -2,7 +2,6 @@ package com.github.nscuro.bradamsang;
 
 import burp.IBurpExtenderCallbacks;
 import burp.IIntruderPayloadGenerator;
-import com.github.nscuro.bradamsang.io.WslCommandExecutor;
 import com.github.nscuro.bradamsang.radamsa.Parameters;
 import com.github.nscuro.bradamsang.radamsa.Radamsa;
 import com.github.nscuro.bradamsang.radamsa.RadamsaException;
