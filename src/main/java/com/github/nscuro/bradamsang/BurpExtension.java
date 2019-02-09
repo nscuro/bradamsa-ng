@@ -1,9 +1,11 @@
 package com.github.nscuro.bradamsang;
 
 import burp.IBurpExtenderCallbacks;
+import com.github.nscuro.bradamsang.io.NativeCommandExecutor;
 import com.github.nscuro.bradamsang.ui.SettingsTabController;
 import com.github.nscuro.bradamsang.ui.SettingsTabModel;
 import com.github.nscuro.bradamsang.ui.SettingsTabView;
+import com.github.nscuro.bradamsang.wsl.WslHelper;
 
 import javax.annotation.Nonnull;
 
@@ -15,7 +17,7 @@ public class BurpExtension {
         extenderCallbacks.setExtensionName(EXTENSION_NAME);
 
         final SettingsTabController tab = new SettingsTabController(new SettingsTabModel(),
-                new SettingsTabView(), extenderCallbacks);
+                new SettingsTabView(), extenderCallbacks, new WslHelper(new NativeCommandExecutor(), null));
 
         extenderCallbacks.addSuiteTab(tab);
 

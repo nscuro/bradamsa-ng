@@ -3,11 +3,13 @@ package com.github.nscuro.bradamsang.ui;
 import burp.IBurpExtenderCallbacks;
 import burp.ITab;
 import com.github.nscuro.bradamsang.BurpExtension;
+import com.github.nscuro.bradamsang.BurpUtils;
 import com.github.nscuro.bradamsang.OptionsProvider;
+import com.github.nscuro.bradamsang.wsl.WslHelper;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import javax.swing.JFileChooser;
+import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
@@ -18,6 +20,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Optional;
@@ -30,12 +33,16 @@ public class SettingsTabController implements ITab, OptionsProvider, ActionListe
 
     private final IBurpExtenderCallbacks extenderCallbacks;
 
+    private final WslHelper wslHelper;
+
     public SettingsTabController(final SettingsTabModel model,
                                  final SettingsTabView view,
-                                 final IBurpExtenderCallbacks extenderCallbacks) {
+                                 final IBurpExtenderCallbacks extenderCallbacks,
+                                 final WslHelper wslHelper) {
         this.model = model;
         this.view = view;
         this.extenderCallbacks = extenderCallbacks;
+        this.wslHelper = wslHelper;
     }
 
     @Override
@@ -45,6 +52,44 @@ public class SettingsTabController implements ITab, OptionsProvider, ActionListe
 
     @Override
     public Component getUiComponent() {
+        // Register ActionListener
+        view.getRadamsaCommandButton().addActionListener(this);
+        view.getRadamsaOutputDirButton().addActionListener(this);
+        view.getIntruderInputDirButton().addActionListener(this);
+
+        // Register DocumentListener
+        view.getRadamsaCommandTextField().getDocument().addDocumentListener(this);
+        view.getRadamsaOutputDirTextField().getDocument().addDocumentListener(this);
+        view.getIntruderInputDirTextField().getDocument().addDocumentListener(this);
+        view.getCustomSeedTextField().getDocument().addDocumentListener(this);
+
+        // Register ChangeListener
+        view.getPayloadCountSpinner().setModel(new SpinnerNumberModel(1, 1, 1000, 1));
+        view.getPayloadCountSpinner().addChangeListener(this);
+
+        // Register ItemListener
+        view.getCustomSeedCheckBox().addItemListener(this);
+        view.getEnableWslModeCheckBox().addItemListener(this);
+
+        // Check if WSL is available
+        try {
+            final boolean wslModeAvailable = wslHelper.isWslAvailable();
+
+            model.setAvailableWslDistros(wslHelper.getAvailableDistributions());
+
+            if (wslModeAvailable && !model.getAvailableWslDistros().isEmpty()) {
+                model.setWslAvailable(true);
+            } else if (model.getAvailableWslDistros().isEmpty()) {
+                extenderCallbacks.printOutput("WSL is available but no installed distros have been found");
+                model.setWslAvailable(false);
+            }
+        } catch (IOException e) {
+            BurpUtils.printStackTrace(extenderCallbacks, e);
+            model.setWslAvailable(false);
+        }
+
+        updateView();
+
         return view.$$$getRootComponent$$$();
     }
 
@@ -129,6 +174,8 @@ public class SettingsTabController implements ITab, OptionsProvider, ActionListe
                     .getPathFromFileChooser(JFileChooser.DIRECTORIES_ONLY)
                     .ifPresent(model::setIntruderInputDir);
         }
+
+        updateView();
     }
 
     @Override
@@ -144,6 +191,8 @@ public class SettingsTabController implements ITab, OptionsProvider, ActionListe
         } else if (eventSource == view.getCustomSeedTextField().getDocument()) {
             model.setCustomSeed(newText);
         }
+
+        updateView();
     }
 
     @Override
@@ -155,6 +204,8 @@ public class SettingsTabController implements ITab, OptionsProvider, ActionListe
         } else if (eventSource == view.getEnableWslModeCheckBox()) {
             model.setWslModeEnabled(itemEvent.getStateChange() == ItemEvent.SELECTED);
         }
+
+        updateView();
     }
 
     @Override
@@ -164,13 +215,37 @@ public class SettingsTabController implements ITab, OptionsProvider, ActionListe
         if (eventSource == view.getPayloadCountSpinner()) {
             model.setPayloadCount((String) view.getPayloadCountSpinner().getValue());
         }
+
+        updateView();
     }
 
     /**
      * Update the view based upon the model's current state.
      */
     private void updateView() {
-        // TODO
+        // Radamsa executable cannot be selected in WSL mode
+        view.getRadamsaCommandButton().setEnabled(!(model.isWslAvailable() && model.isWslModeEnabled()));
+        view.getRadamsaOutputDirTextField().setText(model.getRadamsaOutputDir());
+
+        // The output dir must be visible to Radamsa. When in WSL mode,
+        // Radamsa needs a path that is valid inside the WSL distro AND
+        // exists on the host. In this case, it makes more sense to specify
+        // an intruder input dir from the host and convert this path using WslHelper.
+        view.getRadamsaOutputDirTextField().setEnabled(!(model.isWslAvailable() && model.isWslModeEnabled()));
+        view.getRadamsaOutputDirTextField().setText(model.getRadamsaOutputDir());
+        view.getRadamsaOutputDirButton().setEnabled(view.getRadamsaOutputDirTextField().isEnabled());
+
+        view.getIntruderInputDirTextField().setEnabled(model.isWslAvailable() && model.isWslModeEnabled());
+        view.getIntruderInputDirTextField().setText(model.getIntruderInputDir());
+        view.getIntruderInputDirButton().setEnabled(view.getIntruderInputDirTextField().isEnabled());
+
+        view.getCustomSeedCheckBox().setSelected(model.isUseCustomSeed());
+        view.getCustomSeedTextField().setEnabled(model.isUseCustomSeed());
+        view.getCustomSeedTextField().setText(model.getCustomSeed());
+
+        view.getEnableWslModeCheckBox().setEnabled(model.isWslAvailable());
+        view.getEnableWslModeCheckBox().setSelected(model.isWslModeEnabled());
+        view.getWslDistroComboBox().setEnabled(model.isWslAvailable() && model.isWslModeEnabled());
     }
 
 }
