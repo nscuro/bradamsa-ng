@@ -1,6 +1,7 @@
 package com.github.nscuro.bradamsang.radamsa;
 
 import com.github.nscuro.bradamsang.io.CommandExecutor;
+import com.github.nscuro.bradamsang.io.ExecutionResult;
 import com.github.nscuro.bradamsang.radamsa.Parameters.ParametersBuilder;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -11,10 +12,12 @@ import org.junit.jupiter.params.provider.ValueSource;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
+import java.util.Arrays;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
 
@@ -38,12 +41,12 @@ class RadamsaTest {
     @Nested
     class FuzzTest {
 
-//        @BeforeEach
-//        void beforeEach() throws IOException {
-//            // Make isValidRadamsaCommand pass as long as DUMMY_RADAMSA_COMMAND is used
-//            given(commandExecutorMock.execute(any()))
-//                    .willReturn(Optional.of(DUMMY_RADAMSA_VERSION));
-//        }
+        @BeforeEach
+        void beforeEach() throws IOException {
+            // Make isValidRadamsaCommand pass as long as DUMMY_RADAMSA_COMMAND is used
+            given(commandExecutorMock.execute(eq(Arrays.asList(DUMMY_RADAMSA_COMMAND, "-V"))))
+                    .willReturn(new ExecutionResult(0, DUMMY_RADAMSA_VERSION));
+        }
 
         @Test
         void shouldThrowExceptionWhenCommandIsNotValid() {
@@ -62,7 +65,7 @@ class RadamsaTest {
         }
 
         @Test
-        void shouldThrowExceptionWhenOutputDirectoryIsNull() {
+        void shouldThrowExceptionWhenOutputDirectoryIsNull() throws IOException {
             assertThatExceptionOfType(RadamsaException.class)
                     .isThrownBy(() -> radamsa.fuzz(getDefaultParametersBuilder().outputDirectoryPath(null).build()))
                     .withMessageContaining("output directory");
