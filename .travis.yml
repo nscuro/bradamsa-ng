@@ -5,10 +5,19 @@ jdk:
 
 before_install:
   - chmod +x ./mvnw
+
 install:
   - ./mvnw test-compile -DskipTests
+
 script:
   - ./mvnw test jacoco:report
+
+after_success:
+  - ./mvnw coveralls:report
+
+branches:
+  only:
+    - master
 
 notifications:
   email:
