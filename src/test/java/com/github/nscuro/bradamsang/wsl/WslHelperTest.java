@@ -67,6 +67,8 @@ class WslHelperTest {
 
         @Test
         void shouldReturnFalseWhenOsIsNotWindows10() throws IOException {
+            System.setProperty("os.name", "Not Windows 10");
+
             assertThat(wslHelper.isWslAvailable())
                     .isFalse();
         }
