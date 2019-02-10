@@ -7,15 +7,16 @@ import java.util.Optional;
 public interface OptionsProvider {
 
     @Nonnull
-    String getRadamsaCommand();
+    Optional<String> getRadamsaCommand();
 
+    @Nonnull
     Optional<Integer> getCount();
 
     @Nonnull
     Optional<Long> getSeed();
 
     @Nonnull
-    Path getRadamsaOutputDirectoryPath();
+    Optional<Path> getRadamsaOutputDirectoryPath();
 
     @Nonnull
     Optional<Path> getIntruderInputDirectoryPath();

@@ -31,10 +31,10 @@ interface DocumentChangedListener extends DocumentListener {
             newText = null;
         }
 
-        onDocumentChanged(documentEvent, newText);
+        onDocumentChanged(newText);
     }
 
-    void onDocumentChanged(final DocumentEvent documentEvent, @Nullable final String newText);
+    void onDocumentChanged(@Nullable final String newText);
 
     static void addDocumentChangedListener(final JTextField textField,
                                            final DocumentChangedListener listener) {

@@ -16,14 +16,17 @@ public class BurpExtension {
     public void registerExtension(@Nonnull final IBurpExtenderCallbacks extenderCallbacks) {
         extenderCallbacks.setExtensionName(EXTENSION_NAME);
 
-        final SettingsTabController tab = new SettingsTabController(new SettingsTabModel(),
-                new SettingsTabView(), extenderCallbacks, new WslHelper(new NativeCommandExecutor(), null));
+        final SettingsTabModel settingsTabModel = new SettingsTabModel();
+        final SettingsTabView settingsTabView = new SettingsTabView();
+
+        final SettingsTabController tab = new SettingsTabController(settingsTabModel, settingsTabView,
+                extenderCallbacks, new WslHelper(new NativeCommandExecutor(), null));
 
         extenderCallbacks.addSuiteTab(tab);
 
-        extenderCallbacks.registerIntruderPayloadGeneratorFactory(new IntruderPayloadGeneratorFactory(extenderCallbacks, tab));
+        extenderCallbacks.registerIntruderPayloadGeneratorFactory(new IntruderPayloadGeneratorFactory(extenderCallbacks, settingsTabModel));
 
-        extenderCallbacks.registerIntruderPayloadProcessor(new IntruderPayloadProcessor(extenderCallbacks, tab));
+        extenderCallbacks.registerIntruderPayloadProcessor(new IntruderPayloadProcessor(extenderCallbacks, settingsTabModel));
     }
 
 }

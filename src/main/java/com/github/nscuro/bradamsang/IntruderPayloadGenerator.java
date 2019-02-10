@@ -72,7 +72,10 @@ class IntruderPayloadGenerator implements IIntruderPayloadGenerator {
 
             final Path payloadFilesDirectoryPath = optionsProvider
                     .getIntruderInputDirectoryPath()
-                    .orElseGet(optionsProvider::getRadamsaOutputDirectoryPath);
+                    .orElseGet(() -> optionsProvider
+                            .getRadamsaOutputDirectoryPath()
+                            .orElseThrow(() -> new IllegalStateException("Neither intruder input dir nor radamsa output dir provided"))
+                    );
 
             // Make sure the input directory is accessible
             if (!payloadFilesDirectoryPath.toFile().exists()
@@ -143,7 +146,9 @@ class IntruderPayloadGenerator implements IIntruderPayloadGenerator {
                 .count(optionsProvider.getCount().orElse(null))
                 .seed(optionsProvider.getSeed().orElse(null))
                 .baseValue(baseValue)
-                .outputDirectoryPath(optionsProvider.getRadamsaOutputDirectoryPath())
+                .outputDirectoryPath(optionsProvider
+                        .getRadamsaOutputDirectoryPath()
+                        .orElseThrow(() -> new IllegalArgumentException("No output directory provided")))
                 .build();
 
         radamsa.fuzz(parameters);

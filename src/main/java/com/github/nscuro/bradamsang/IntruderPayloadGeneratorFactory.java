@@ -36,14 +36,18 @@ class IntruderPayloadGeneratorFactory implements IIntruderPayloadGeneratorFactor
             if (optionsProvider.getWslDistributionName().isPresent()) {
                 commandExecutor = new WslCommandExecutor(optionsProvider.getWslDistributionName().get());
             } else {
-                throw new IllegalArgumentException("WSL mode enabled but not distribution provided");
+                throw new IllegalStateException("WSL mode enabled but no distribution selected");
             }
         } else {
             commandExecutor = new NativeCommandExecutor();
         }
 
+        if (!optionsProvider.getRadamsaCommand().isPresent()) {
+            throw new IllegalStateException("No radamsa command provided");
+        }
+
         return new IntruderPayloadGenerator(extenderCallbacks, optionsProvider,
-                new Radamsa(commandExecutor, optionsProvider.getRadamsaCommand()));
+                new Radamsa(commandExecutor, optionsProvider.getRadamsaCommand().get()));
     }
 
 }

@@ -4,28 +4,30 @@ import burp.IBurpExtenderCallbacks;
 import burp.ITab;
 import com.github.nscuro.bradamsang.BurpExtension;
 import com.github.nscuro.bradamsang.BurpUtils;
-import com.github.nscuro.bradamsang.OptionsProvider;
 import com.github.nscuro.bradamsang.wsl.WslHelper;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import javax.swing.*;
+import javax.swing.JFileChooser;
+import javax.swing.SpinnerNumberModel;
+import javax.swing.UIManager;
 import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
-import javax.swing.event.DocumentEvent;
-import javax.swing.text.Document;
+import java.awt.Color;
 import java.awt.Component;
-import java.awt.ItemSelectable;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
 import java.util.Optional;
 
-public class SettingsTabController implements ITab, OptionsProvider, ActionListener, DocumentChangedListener, ItemListener, ChangeListener {
+import static com.github.nscuro.bradamsang.ui.DocumentChangedListener.addDocumentChangedListener;
+
+public class SettingsTabController implements ITab {
+
+    private static final Color ERROR_COLOR = Color.RED;
 
     private final SettingsTabModel model;
 
@@ -53,34 +55,38 @@ public class SettingsTabController implements ITab, OptionsProvider, ActionListe
     @Override
     public Component getUiComponent() {
         // Register ActionListener
-        view.getRadamsaCommandButton().addActionListener(this);
-        view.getRadamsaOutputDirButton().addActionListener(this);
-        view.getIntruderInputDirButton().addActionListener(this);
+        view.getRadamsaCommandButton().addActionListener(this::onRadamsaCommandButtonPressed);
+        view.getRadamsaOutputDirButton().addActionListener(this::onRadamsaOutputDirButtonPressed);
+        view.getIntruderInputDirButton().addActionListener(this::onIntruderInputDirButtonPressed);
 
         // Register DocumentListener
-        view.getRadamsaCommandTextField().getDocument().addDocumentListener(this);
-        view.getRadamsaOutputDirTextField().getDocument().addDocumentListener(this);
-        view.getIntruderInputDirTextField().getDocument().addDocumentListener(this);
-        view.getCustomSeedTextField().getDocument().addDocumentListener(this);
-
-        // Register ChangeListener
-        view.getPayloadCountSpinner().setModel(new SpinnerNumberModel(1, 1, 1000, 1));
-        view.getPayloadCountSpinner().addChangeListener(this);
+        addDocumentChangedListener(view.getRadamsaCommandTextField(), this::onRadamsaCommandDocumentChanged);
+        addDocumentChangedListener(view.getCustomSeedTextField(), this::onCustomSeedDocumentChanged);
 
         // Register ItemListener
-        view.getCustomSeedCheckBox().addItemListener(this);
-        view.getEnableWslModeCheckBox().addItemListener(this);
+        view.getCustomSeedCheckBox().addItemListener(this::onCustomSeedCheckBoxItemStateChanged);
+        view.getEnableWslModeCheckBox().addItemListener(this::onEnableWslModeCheckBoxItemStateChanged);
+        view.getWslDistroComboBox().addItemListener(this::onWslDistroComboBoxItemStateChanged);
 
-        // Check if WSL is available
+        // Set model of Spinner
+        view.getPayloadCountSpinner().setModel(new SpinnerNumberModel(1, 1, 1000, 1));
+
+        // Register ChangeListener
+        view.getPayloadCountSpinner().addChangeListener(this::onPayloadCountSpinnderStateChanged);
+
+        // Register the view as observer for changes made in the model
+        model.addObserver(view);
+
+        // Determine if WSL is available
         try {
-            final boolean wslModeAvailable = wslHelper.isWslAvailable();
+            final boolean wslAvailable = wslHelper.isWslAvailable();
 
-            model.setAvailableWslDistros(wslHelper.getAvailableDistributions());
+            if (wslAvailable) {
+                final List<String> wslDistros = wslHelper.getAvailableDistributions();
 
-            if (wslModeAvailable && !model.getAvailableWslDistros().isEmpty()) {
-                model.setWslAvailable(true);
-            } else if (model.getAvailableWslDistros().isEmpty()) {
-                extenderCallbacks.printOutput("WSL is available but no installed distros have been found");
+                model.setWslAvailable(!wslDistros.isEmpty());
+                model.setAvailableWslDistros(wslDistros);
+            } else {
                 model.setWslAvailable(false);
             }
         } catch (IOException e) {
@@ -88,164 +94,98 @@ public class SettingsTabController implements ITab, OptionsProvider, ActionListe
             model.setWslAvailable(false);
         }
 
-        updateView();
-
         return view.$$$getRootComponent$$$();
     }
 
-    @Nonnull
-    @Override
-    public String getRadamsaCommand() {
-        return Optional
-                .ofNullable(model.getRadamsaCommand())
-                .orElseThrow(IllegalStateException::new);
-    }
+    private void onRadamsaCommandButtonPressed(final ActionEvent actionEvent) {
+        final Optional<String> command = view.getPathFromFileChooser(JFileChooser.FILES_ONLY);
 
-    @Override
-    public Optional<Integer> getCount() {
-        return Optional
-                .ofNullable(model.getPayloadCount())
-                .map(Integer::parseInt);
-    }
+        if (command.isPresent()) {
+            final File radamsaFile = new File(command.get());
 
-    @Nonnull
-    @Override
-    public Optional<Long> getSeed() {
-        if (model.isUseCustomSeed()) {
-            return Optional
-                    .ofNullable(model.getCustomSeed())
-                    .map(Long::parseLong);
+            if (radamsaFile.isFile() && radamsaFile.canExecute()) {
+                model.setRadamsaCommand(command.get());
+            } else {
+                view.showWarningDialog("The selected file does not exist or is not executable.");
+            }
+        } else {
+            view.showWarningDialog("No Radamsa binary selected.");
         }
-
-        return Optional.empty();
     }
 
-    @Nonnull
-    @Override
-    public Path getRadamsaOutputDirectoryPath() {
-        return Optional
-                .ofNullable(model.getRadamsaOutputDir())
+    private void onRadamsaOutputDirButtonPressed(final ActionEvent actionEvent) {
+        final Optional<Path> outputDir = view
+                .getPathFromFileChooser(JFileChooser.DIRECTORIES_ONLY)
                 .map(Paths::get)
-                .orElseThrow(IllegalStateException::new);
-    }
+                .filter(path -> path.toFile().isDirectory());
 
-    @Nonnull
-    @Override
-    public Optional<Path> getIntruderInputDirectoryPath() {
-        if (model.isWslAvailable() && model.isWslModeEnabled()) {
-            return Optional
-                    .ofNullable(model.getIntruderInputDir())
-                    .map(Paths::get);
+        if (outputDir.isPresent()) {
+            model.setRadamsaOutputDir(outputDir.get());
+            model.setIntruderInputDir(outputDir.get());
+        } else {
+            view.showWarningDialog("No or nonexistent intruder input directory selected.");
         }
-
-        return Optional.empty();
     }
 
-    @Override
-    public boolean isWslModeEnabled() {
-        return model.isWslModeEnabled();
-    }
+    private void onIntruderInputDirButtonPressed(final ActionEvent actionEvent) {
+        final Optional<Path> inputDir = view
+                .getPathFromFileChooser(JFileChooser.DIRECTORIES_ONLY)
+                .map(Paths::get)
+                .filter(path -> path.toFile().isDirectory());
 
-    @Nonnull
-    @Override
-    public Optional<String> getWslDistributionName() {
-        if (model.isWslAvailable() && model.isWslModeEnabled()) {
-            return Optional
-                    .ofNullable(model.getWslDistroName());
+        if (inputDir.isPresent()) {
+            try {
+                // We need a valid WSL path so that Radamsa knows where to dump its output to.
+                // If we can't get that for some reason, setting the intruder input dir alone doesn't make any sense
+                model.setRadamsaOutputDir(Paths.get(wslHelper.getWslPathForNativePath(inputDir.get())));
+                model.setIntruderInputDir(inputDir.get());
+            } catch (IOException e) {
+                BurpUtils.printStackTrace(extenderCallbacks, e);
+            }
+        } else {
+            view.showWarningDialog("No or nonexistent intruder input directory selected");
         }
-
-        return Optional.empty();
     }
 
-    @Override
-    public void actionPerformed(final ActionEvent actionEvent) {
-        final Object eventSource = actionEvent.getSource();
-
-        if (eventSource == view.getRadamsaCommandButton()) {
-            view
-                    .getPathFromFileChooser(JFileChooser.FILES_ONLY)
-                    .ifPresent(model::setRadamsaCommand);
-        } else if (eventSource == view.getRadamsaOutputDirButton()) {
-            view
-                    .getPathFromFileChooser(JFileChooser.DIRECTORIES_ONLY)
-                    .ifPresent(model::setRadamsaOutputDir);
-        } else if (eventSource == view.getIntruderInputDirButton()) {
-            view
-                    .getPathFromFileChooser(JFileChooser.DIRECTORIES_ONLY)
-                    .ifPresent(model::setIntruderInputDir);
-        }
-
-        updateView();
-    }
-
-    @Override
-    public void onDocumentChanged(final DocumentEvent documentEvent, @Nullable final String newText) {
-        final Document eventSource = documentEvent.getDocument();
-
-        if (eventSource == view.getRadamsaCommandTextField().getDocument()) {
+    private void onRadamsaCommandDocumentChanged(@Nullable final String newText) {
+        if (model.isWslAvailableAndEnabled()) {
+            // TODO: Validate command
             model.setRadamsaCommand(newText);
-        } else if (eventSource == view.getRadamsaOutputDirTextField().getDocument()) {
-            model.setRadamsaOutputDir(newText);
-        } else if (eventSource == view.getIntruderInputDirTextField().getDocument()) {
-            model.setIntruderInputDir(newText);
-        } else if (eventSource == view.getCustomSeedTextField().getDocument()) {
-            model.setCustomSeed(newText);
         }
-
-        updateView();
     }
 
-    @Override
-    public void itemStateChanged(final ItemEvent itemEvent) {
-        final ItemSelectable eventSource = itemEvent.getItemSelectable();
-
-        if (eventSource == view.getCustomSeedCheckBox()) {
-            model.setUseCustomSeed(itemEvent.getStateChange() == ItemEvent.SELECTED);
-        } else if (eventSource == view.getEnableWslModeCheckBox()) {
-            model.setWslModeEnabled(itemEvent.getStateChange() == ItemEvent.SELECTED);
+    private void onCustomSeedDocumentChanged(@Nullable final String newText) {
+        if (newText != null && newText.matches("^[0-9]+$")) {
+            try {
+                model.setCustomSeed(Long.parseLong(newText));
+                view.getCustomSeedTextField().setForeground(getDefaultTextFieldForegroundColor());
+            } catch (NumberFormatException e) {
+                view.getCustomSeedTextField().setForeground(ERROR_COLOR);
+            }
+        } else {
+            view.getCustomSeedTextField().setForeground(ERROR_COLOR);
         }
-
-        updateView();
     }
 
-    @Override
-    public void stateChanged(final ChangeEvent changeEvent) {
-        final Object eventSource = changeEvent.getSource();
-
-        if (eventSource == view.getPayloadCountSpinner()) {
-            model.setPayloadCount((String) view.getPayloadCountSpinner().getValue());
-        }
-
-        updateView();
+    private void onCustomSeedCheckBoxItemStateChanged(final ItemEvent itemEvent) {
+        model.setUseCustomSeed(itemEvent.getStateChange() == ItemEvent.SELECTED);
     }
 
-    /**
-     * Update the view based upon the model's current state.
-     */
-    private void updateView() {
-        // Radamsa executable cannot be selected in WSL mode
-        view.getRadamsaCommandButton().setEnabled(!(model.isWslAvailable() && model.isWslModeEnabled()));
-        view.getRadamsaOutputDirTextField().setText(model.getRadamsaOutputDir());
+    private void onEnableWslModeCheckBoxItemStateChanged(final ItemEvent itemEvent) {
+        model.setWslModeEnabled(itemEvent.getStateChange() == ItemEvent.SELECTED);
+    }
 
-        // The output dir must be visible to Radamsa. When in WSL mode,
-        // Radamsa needs a path that is valid inside the WSL distro AND
-        // exists on the host. In this case, it makes more sense to specify
-        // an intruder input dir from the host and convert this path using WslHelper.
-        view.getRadamsaOutputDirTextField().setEnabled(!(model.isWslAvailable() && model.isWslModeEnabled()));
-        view.getRadamsaOutputDirTextField().setText(model.getRadamsaOutputDir());
-        view.getRadamsaOutputDirButton().setEnabled(view.getRadamsaOutputDirTextField().isEnabled());
+    private void onWslDistroComboBoxItemStateChanged(final ItemEvent itemEvent) {
+        model.setWslDistroName((String) view.getWslDistroComboBox().getSelectedItem());
+    }
 
-        view.getIntruderInputDirTextField().setEnabled(model.isWslAvailable() && model.isWslModeEnabled());
-        view.getIntruderInputDirTextField().setText(model.getIntruderInputDir());
-        view.getIntruderInputDirButton().setEnabled(view.getIntruderInputDirTextField().isEnabled());
+    private void onPayloadCountSpinnderStateChanged(final ChangeEvent changeEvent) {
+        model.setPayloadCount(((Number) view.getPayloadCountSpinner().getValue()).intValue());
+    }
 
-        view.getCustomSeedCheckBox().setSelected(model.isUseCustomSeed());
-        view.getCustomSeedTextField().setEnabled(model.isUseCustomSeed());
-        view.getCustomSeedTextField().setText(model.getCustomSeed());
-
-        view.getEnableWslModeCheckBox().setEnabled(model.isWslAvailable());
-        view.getEnableWslModeCheckBox().setSelected(model.isWslModeEnabled());
-        view.getWslDistroComboBox().setEnabled(model.isWslAvailable() && model.isWslModeEnabled());
+    @Nonnull
+    private Color getDefaultTextFieldForegroundColor() {
+        return UIManager.getDefaults().getColor("TextField.foreground");
     }
 
 }
