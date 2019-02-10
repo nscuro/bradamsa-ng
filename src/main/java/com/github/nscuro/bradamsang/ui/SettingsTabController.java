@@ -4,6 +4,8 @@ import burp.IBurpExtenderCallbacks;
 import burp.ITab;
 import com.github.nscuro.bradamsang.BurpExtension;
 import com.github.nscuro.bradamsang.BurpUtils;
+import com.github.nscuro.bradamsang.io.WslCommandExecutor;
+import com.github.nscuro.bradamsang.wsl.WslException;
 import com.github.nscuro.bradamsang.wsl.WslHelper;
 
 import javax.annotation.Nonnull;
@@ -22,10 +24,14 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.Optional;
+import java.util.regex.Pattern;
 
 import static com.github.nscuro.bradamsang.ui.DocumentChangedListener.addDocumentChangedListener;
+import static java.lang.String.format;
 
 public class SettingsTabController implements ITab {
+
+    private static final Pattern RADAMSA_COMMAND_PATTERN = Pattern.compile("^\\S*radamsa(?:\\.[a-z]{1,3})?$", Pattern.CASE_INSENSITIVE);
 
     private static final Color ERROR_COLOR = Color.RED;
 
@@ -84,13 +90,21 @@ public class SettingsTabController implements ITab {
             if (wslAvailable) {
                 final List<String> wslDistros = wslHelper.getAvailableDistributions();
 
-                model.setWslAvailable(!wslDistros.isEmpty());
-                model.setAvailableWslDistros(wslDistros);
+                if (wslDistros.isEmpty()) {
+                    extenderCallbacks.printOutput("WSL is available, but no installed distributions have been found");
+                    model.setWslAvailable(false);
+                } else {
+                    extenderCallbacks.printOutput(format("WSL is available and the following distributions "
+                            + "have been found: %s", wslDistros));
+                    model.setWslAvailable(true);
+                    model.setAvailableWslDistros(wslDistros);
+                }
             } else {
                 model.setWslAvailable(false);
             }
         } catch (IOException e) {
             BurpUtils.printStackTrace(extenderCallbacks, e);
+            view.showErrorDialog(format("Was unable to determine if WSL is available: %s", e.getMessage()));
             model.setWslAvailable(false);
         }
 
@@ -105,6 +119,7 @@ public class SettingsTabController implements ITab {
 
             if (radamsaFile.isFile() && radamsaFile.canExecute()) {
                 model.setRadamsaCommand(command.get());
+                view.getRadamsaCommandTextField().setForeground(getDefaultTextFieldForegroundColor());
             } else {
                 view.showWarningDialog("The selected file does not exist or is not executable.");
             }
@@ -139,8 +154,10 @@ public class SettingsTabController implements ITab {
                 // If we can't get that for some reason, setting the intruder input dir alone doesn't make any sense
                 model.setRadamsaOutputDir(Paths.get(wslHelper.getWslPathForNativePath(inputDir.get())));
                 model.setIntruderInputDir(inputDir.get());
-            } catch (IOException e) {
+            } catch (IOException | WslException | IllegalArgumentException e) {
                 BurpUtils.printStackTrace(extenderCallbacks, e);
+                view.showErrorDialog(format("Couldn't convert Intruder input path to Radamsa "
+                        + "WSL output path:\n%s", e.getMessage()));
             }
         } else {
             view.showWarningDialog("No or nonexistent intruder input directory selected");
@@ -149,8 +166,20 @@ public class SettingsTabController implements ITab {
 
     private void onRadamsaCommandDocumentChanged(@Nullable final String newText) {
         if (model.isWslAvailableAndEnabled()) {
-            // TODO: Validate command
-            model.setRadamsaCommand(newText);
+            if (newText != null && RADAMSA_COMMAND_PATTERN.matcher(newText).matches()) {
+                // Provide at least SOME form of feedback and check if the provided command
+                // can be found inside the WSL guest - be it as command in $PATH or as actual file.
+                try {
+                    if (wslHelper.isCommandInWslPath(newText) || wslHelper.isExistingFile(newText)) {
+                        model.setRadamsaCommand(newText);
+                        view.getRadamsaCommandTextField().setForeground(getDefaultTextFieldForegroundColor());
+                    }
+                } catch (IOException | WslException e) {
+                    view.getRadamsaCommandTextField().setForeground(ERROR_COLOR);
+                }
+            } else {
+                view.getRadamsaCommandTextField().setForeground(ERROR_COLOR);
+            }
         }
     }
 
@@ -160,9 +189,11 @@ public class SettingsTabController implements ITab {
                 model.setCustomSeed(Long.parseLong(newText));
                 view.getCustomSeedTextField().setForeground(getDefaultTextFieldForegroundColor());
             } catch (NumberFormatException e) {
+                model.setCustomSeed(null);
                 view.getCustomSeedTextField().setForeground(ERROR_COLOR);
             }
         } else {
+            model.setCustomSeed(null);
             view.getCustomSeedTextField().setForeground(ERROR_COLOR);
         }
     }
@@ -172,11 +203,23 @@ public class SettingsTabController implements ITab {
     }
 
     private void onEnableWslModeCheckBoxItemStateChanged(final ItemEvent itemEvent) {
+        model.resetWslRelatedValues();
         model.setWslModeEnabled(itemEvent.getStateChange() == ItemEvent.SELECTED);
+
+        // Not all changes in the model are reflected in the UI, depending on if
+        // WSL mode is enabled or not. To be safe, we just clear 'em all
+        view.getRadamsaCommandTextField().setText(null);
+        view.getRadamsaOutputDirTextField().setText(null);
+        view.getIntruderInputDirTextField().setText(null);
     }
 
     private void onWslDistroComboBoxItemStateChanged(final ItemEvent itemEvent) {
-        model.setWslDistroName((String) view.getWslDistroComboBox().getSelectedItem());
+        final String selectedDistro = (String) view.getWslDistroComboBox().getSelectedItem();
+
+        if (selectedDistro != null && model.getAvailableWslDistros().contains(selectedDistro)) {
+            wslHelper.setWslCommandExecutor(new WslCommandExecutor(selectedDistro));
+            model.setWslDistroName(selectedDistro);
+        }
     }
 
     private void onPayloadCountSpinnderStateChanged(final ChangeEvent changeEvent) {

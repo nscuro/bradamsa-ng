@@ -55,10 +55,10 @@ class WslHelperTest {
 
         @Test
         void shouldReturnTrueWhenAllRequirementsAreMet() throws IOException {
-            given(nativeCommandExecutorMock.execute(Arrays.asList(COMMAND_WHERE, COMMAND_WSL)))
+            given(nativeCommandExecutorMock.execute(Arrays.asList(COMMAND_WHERE, "/q", COMMAND_WSL)))
                     .willReturn(new ExecutionResult(0, null));
 
-            given(nativeCommandExecutorMock.execute(Arrays.asList(COMMAND_WHERE, COMMAND_WSLCONFIG)))
+            given(nativeCommandExecutorMock.execute(Arrays.asList(COMMAND_WHERE, "/q", COMMAND_WSLCONFIG)))
                     .willReturn(new ExecutionResult(0, null));
 
             assertThat(wslHelper.isWslAvailable())
@@ -75,7 +75,7 @@ class WslHelperTest {
 
         @Test
         void shouldReturnFalseWhenWslCommandCannotBeFound() throws IOException {
-            given(nativeCommandExecutorMock.execute(Arrays.asList(COMMAND_WHERE, COMMAND_WSL)))
+            given(nativeCommandExecutorMock.execute(Arrays.asList(COMMAND_WHERE, "/q", COMMAND_WSL)))
                     .willReturn(new ExecutionResult(1, null));
 
             assertThat(wslHelper.isWslAvailable())
@@ -84,10 +84,10 @@ class WslHelperTest {
 
         @Test
         void shouldReturnFalseWhenWslconfigCommandCannotBeFound() throws IOException {
-            given(nativeCommandExecutorMock.execute(Arrays.asList(COMMAND_WHERE, COMMAND_WSL)))
+            given(nativeCommandExecutorMock.execute(Arrays.asList(COMMAND_WHERE, "/q", COMMAND_WSL)))
                     .willReturn(new ExecutionResult(0, null));
 
-            given(nativeCommandExecutorMock.execute(Arrays.asList(COMMAND_WHERE, COMMAND_WSLCONFIG)))
+            given(nativeCommandExecutorMock.execute(Arrays.asList(COMMAND_WHERE, "/q", COMMAND_WSLCONFIG)))
                     .willReturn(new ExecutionResult(1, null));
 
             assertThat(wslHelper.isWslAvailable())

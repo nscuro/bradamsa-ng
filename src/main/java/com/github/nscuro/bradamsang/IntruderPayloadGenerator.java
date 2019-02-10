@@ -62,7 +62,8 @@ class IntruderPayloadGenerator implements IIntruderPayloadGenerator {
     @Override
     public byte[] getNextPayload(@Nullable final byte[] baseValue) {
         if (baseValue == null) {
-            extenderCallbacks.printError("No baseValue provided. Be aware that you can't use bradamsa-ng with the battering ram attack!");
+            extenderCallbacks.printError("No baseValue provided. "
+                    + "Be aware that you can't use bradamsa-ng with the battering ram attack!");
 
             return null;
         }
@@ -74,13 +75,15 @@ class IntruderPayloadGenerator implements IIntruderPayloadGenerator {
                     .getIntruderInputDirectoryPath()
                     .orElseGet(() -> optionsProvider
                             .getRadamsaOutputDirectoryPath()
-                            .orElseThrow(() -> new IllegalStateException("Neither intruder input dir nor radamsa output dir provided"))
+                            .orElseThrow(() -> new IllegalStateException("Neither Intruder input dir "
+                                    + "nor Radamsa output dir provided"))
                     );
 
             // Make sure the input directory is accessible
             if (!payloadFilesDirectoryPath.toFile().exists()
                     || !payloadFilesDirectoryPath.toFile().isDirectory()) {
-                extenderCallbacks.printError(format("Payload input path \"%s\" does not exist or is not a directory", payloadFilesDirectoryPath));
+                extenderCallbacks.printError(format("Payload input path \"%s\" does not exist "
+                        + "or is not a directory", payloadFilesDirectoryPath));
 
                 return null;
             }
@@ -102,7 +105,8 @@ class IntruderPayloadGenerator implements IIntruderPayloadGenerator {
                     .ifPresent(payloadFiles::addAll);
 
             if (payloadFiles.isEmpty()) {
-                extenderCallbacks.printError(format("No payload files have been found in \"%s\". Please check your path settings", payloadFilesDirectoryPath));
+                extenderCallbacks.printError(format("No payload files have been found in \"%s\". "
+                        + "Please check your path settings!", payloadFilesDirectoryPath));
 
                 return null;
             }
@@ -148,7 +152,7 @@ class IntruderPayloadGenerator implements IIntruderPayloadGenerator {
                 .baseValue(baseValue)
                 .outputDirectoryPath(optionsProvider
                         .getRadamsaOutputDirectoryPath()
-                        .orElseThrow(() -> new IllegalArgumentException("No output directory provided")))
+                        .orElseThrow(() -> new IllegalArgumentException("No Radamsa output directory provided")))
                 .build();
 
         radamsa.fuzz(parameters);

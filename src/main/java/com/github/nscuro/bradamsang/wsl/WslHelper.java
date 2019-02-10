@@ -31,7 +31,7 @@ public class WslHelper {
 
     private static final String COMMAND_TEST = "test";
 
-    private static final String EXCEPTION_MSG_NO_WSL_COMMAND_EXECUTOR_SET = "No WslCommandExecutor set";
+    private static final String EXCEPTION_MSG_NO_WSL_COMMAND_EXECUTOR_SET = "No WslCommandExecutor set. Please provide a distribution to use.";
 
     private final NativeCommandExecutor nativeCommandExecutor;
 
@@ -53,8 +53,8 @@ public class WslHelper {
      */
     public boolean isWslAvailable() throws IOException {
         return OS_NAME_WINDOWS_10.equals(System.getProperty("os.name"))
-                && nativeCommandExecutor.execute(Arrays.asList(COMMAND_WHERE, COMMAND_WSL)).getExitCode() == 0
-                && nativeCommandExecutor.execute(Arrays.asList(COMMAND_WHERE, COMMAND_WSLCONFIG)).getExitCode() == 0;
+                && nativeCommandExecutor.execute(Arrays.asList(COMMAND_WHERE, "/q", COMMAND_WSL)).getExitCode() == 0
+                && nativeCommandExecutor.execute(Arrays.asList(COMMAND_WHERE, "/q", COMMAND_WSLCONFIG)).getExitCode() == 0;
     }
 
     /**
@@ -63,7 +63,7 @@ public class WslHelper {
      * The first element normally is the distro currently set as default.
      *
      * @return List of names of all available WSL distros
-     * @throws IOException
+     * @throws IOException When the execution of {@value #COMMAND_WSLCONFIG} failed
      */
     @Nonnull
     public List<String> getAvailableDistributions() throws IOException {
@@ -103,13 +103,13 @@ public class WslHelper {
      * @param nativePath Path to convert to WSL path
      * @return The converted path
      * @throws IOException              When the execution of {@value #COMMAND_WSLPATH} failed
-     * @throws IllegalStateException    When no {@link WslCommandExecutor} is set
+     * @throws WslException             When no {@link WslCommandExecutor} is set
      * @throws IllegalArgumentException When the given native path does not exist
      */
     @Nonnull
-    public String getWslPathForNativePath(final Path nativePath) throws IOException {
+    public String getWslPathForNativePath(final Path nativePath) throws IOException, WslException {
         if (wslCommandExecutor == null) {
-            throw new IllegalStateException(EXCEPTION_MSG_NO_WSL_COMMAND_EXECUTOR_SET);
+            throw new WslException(EXCEPTION_MSG_NO_WSL_COMMAND_EXECUTOR_SET);
         } else if (!nativePath.toFile().exists()) {
             throw new IllegalArgumentException(format("Native path \"%s\" does not exist", nativePath));
         }
@@ -132,12 +132,13 @@ public class WslHelper {
      * Check if a given command is in the $PATH of a WSL guest.
      *
      * @param command The command to check
-     * @return
-     * @throws IOException
+     * @return true when the command is inside the WSL guest's $PATH, otherwise false
+     * @throws IOException  When execution of {@value #COMMAND_WHICH} inside the WSL guest failed
+     * @throws WslException When no {@link WslCommandExecutor} is set
      */
-    public boolean isCommandInWslPath(@Nullable final String command) throws IOException {
+    public boolean isCommandInWslPath(@Nullable final String command) throws IOException, WslException {
         if (wslCommandExecutor == null) {
-            throw new IllegalStateException(EXCEPTION_MSG_NO_WSL_COMMAND_EXECUTOR_SET);
+            throw new WslException(EXCEPTION_MSG_NO_WSL_COMMAND_EXECUTOR_SET);
         } else if (command == null) {
             return false;
         }
@@ -151,13 +152,14 @@ public class WslHelper {
     /**
      * Check if a given file exists inside a WSL guest.
      *
-     * @param filePath
-     * @return
-     * @throws IOException
+     * @param filePath The file path to check
+     * @return true when the file exists, otherwise false
+     * @throws IOException  When the execution of {@value #COMMAND_TEST} inside the WSL guest failed
+     * @throws WslException When no {@link WslCommandExecutor} is set
      */
-    public boolean isExistingFile(@Nullable final String filePath) throws IOException {
+    public boolean isExistingFile(@Nullable final String filePath) throws IOException, WslException {
         if (wslCommandExecutor == null) {
-            throw new IllegalStateException(EXCEPTION_MSG_NO_WSL_COMMAND_EXECUTOR_SET);
+            throw new WslException(EXCEPTION_MSG_NO_WSL_COMMAND_EXECUTOR_SET);
         } else if (filePath == null) {
             return false;
         }

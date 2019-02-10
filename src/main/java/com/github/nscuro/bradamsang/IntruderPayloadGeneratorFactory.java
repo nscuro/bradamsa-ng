@@ -43,7 +43,7 @@ class IntruderPayloadGeneratorFactory implements IIntruderPayloadGeneratorFactor
         }
 
         if (!optionsProvider.getRadamsaCommand().isPresent()) {
-            throw new IllegalStateException("No radamsa command provided");
+            throw new IllegalStateException("No Radamsa command provided");
         }
 
         return new IntruderPayloadGenerator(extenderCallbacks, optionsProvider,
