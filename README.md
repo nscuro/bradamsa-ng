@@ -1,6 +1,7 @@
 # bradamsa-ng
 
 [![Build Status](https://travis-ci.com/nscuro/bradamsa-ng.svg?token=24qz67tadxUHqtNZeoJu&branch=master)](https://travis-ci.com/nscuro/bradamsa-ng)
+[![Known Vulnerabilities](https://snyk.io/test/github/nscuro/bradamsa-ng/badge.svg?targetFile=pom.xml)](https://snyk.io/test/github/nscuro/bradamsa-ng?targetFile=pom.xml)
 
 *A Burp Suite extension for Radamsa-powered fuzzing in Intruder*
 
