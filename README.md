@@ -2,6 +2,7 @@
 
 [![Build Status](https://travis-ci.com/nscuro/bradamsa-ng.svg?token=24qz67tadxUHqtNZeoJu&branch=master)](https://travis-ci.com/nscuro/bradamsa-ng)
 [![Known Vulnerabilities](https://snyk.io/test/github/nscuro/bradamsa-ng/badge.svg?targetFile=pom.xml)](https://snyk.io/test/github/nscuro/bradamsa-ng?targetFile=pom.xml)
+[![Coverage Status](https://coveralls.io/repos/github/nscuro/bradamsa-ng/badge.svg?branch=master)](https://coveralls.io/github/nscuro/bradamsa-ng?branch=master)
 
 *A Burp Suite extension for Radamsa-powered fuzzing in Intruder*
 
