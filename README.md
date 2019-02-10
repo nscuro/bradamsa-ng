@@ -27,7 +27,10 @@ TODO
 
 ## Building
 
-TODO
+* Linux / macOS: `./mvnw clean package`
+* Windows: `mvnw.cmd clean package`
+
+The installable extension JAR can now be found at `target/bradamsa-ng-${version}-jar-with-dependencies.jar`
 
 ## Usage
 
