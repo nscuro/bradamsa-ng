@@ -8,6 +8,7 @@ import com.github.nscuro.bradamsang.io.CommandExecutor;
 import com.github.nscuro.bradamsang.io.NativeCommandExecutor;
 import com.github.nscuro.bradamsang.io.WslCommandExecutor;
 import com.github.nscuro.bradamsang.radamsa.Radamsa;
+import com.github.nscuro.bradamsang.wsl.WslPathConverter;
 
 import javax.annotation.Nonnull;
 
@@ -46,7 +47,7 @@ class IntruderPayloadGeneratorFactory implements IIntruderPayloadGeneratorFactor
             throw new IllegalStateException("No Radamsa command provided");
         }
 
-        return new IntruderPayloadGenerator(extenderCallbacks, optionsProvider,
+        return new IntruderPayloadGenerator(extenderCallbacks, optionsProvider, new WslPathConverter(),
                 new Radamsa(commandExecutor, optionsProvider.getRadamsaCommand().get()));
     }
 

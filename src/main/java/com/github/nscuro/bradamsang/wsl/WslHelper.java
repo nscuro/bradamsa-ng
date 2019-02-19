@@ -7,13 +7,10 @@ import com.github.nscuro.bradamsang.io.WslCommandExecutor;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.io.IOException;
-import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
-
-import static java.lang.String.format;
 
 public class WslHelper {
 
@@ -22,8 +19,6 @@ public class WslHelper {
     static final String COMMAND_WSL = "wsl";
 
     static final String COMMAND_WSLCONFIG = "wslconfig";
-
-    private static final String COMMAND_WSLPATH = "wslpath";
 
     static final String COMMAND_WHERE = "where";
 
@@ -91,41 +86,6 @@ public class WslHelper {
                         .map(line -> line.replaceAll("\\p{C}", ""))
                         .collect(Collectors.toList()))
                 .orElseGet(Collections::emptyList);
-    }
-
-    /**
-     * Use {@value #COMMAND_WSLPATH} to convert a native path from the host to the
-     * equivalent path inside the WSL guest.
-     * <p>
-     * {@value #COMMAND_WSLPATH} was first introduced here:
-     * https://blogs.msdn.microsoft.com/commandline/2018/03/07/windows10v1803/
-     *
-     * @param nativePath Path to convert to WSL path
-     * @return The converted path
-     * @throws IOException              When the execution of {@value #COMMAND_WSLPATH} failed
-     * @throws WslException             When no {@link WslCommandExecutor} is set
-     * @throws IllegalArgumentException When the given native path does not exist
-     */
-    @Nonnull
-    public String getWslPathForNativePath(final Path nativePath) throws IOException, WslException {
-        if (wslCommandExecutor == null) {
-            throw new WslException(EXCEPTION_MSG_NO_WSL_COMMAND_EXECUTOR_SET);
-        } else if (!nativePath.toFile().exists()) {
-            throw new IllegalArgumentException(format("Native path \"%s\" does not exist", nativePath));
-        }
-
-        final ExecutionResult executionResult = wslCommandExecutor
-                .execute(Arrays.asList(COMMAND_WSLPATH, "-a", "-u", nativePath.toString()));
-
-        if (executionResult.getExitCode() != 0) {
-            throw new IOException(format("Converting native path \"%s\" to WSL path failed: %s returned with exit code %d",
-                    nativePath, COMMAND_WSLPATH, executionResult.getExitCode()));
-        }
-
-        return executionResult
-                .getOutput()
-                .map(String::trim)
-                .orElseThrow(IOException::new);
     }
 
     /**

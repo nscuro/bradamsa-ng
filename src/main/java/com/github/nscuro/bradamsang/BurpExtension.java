@@ -24,9 +24,11 @@ public class BurpExtension {
 
         extenderCallbacks.addSuiteTab(tab);
 
-        extenderCallbacks.registerIntruderPayloadGeneratorFactory(new IntruderPayloadGeneratorFactory(extenderCallbacks, settingsTabModel));
+        extenderCallbacks.registerIntruderPayloadGeneratorFactory(
+                new IntruderPayloadGeneratorFactory(extenderCallbacks, settingsTabModel));
 
-        extenderCallbacks.registerIntruderPayloadProcessor(new IntruderPayloadProcessor(extenderCallbacks, settingsTabModel));
+        extenderCallbacks.registerIntruderPayloadProcessor(
+                new IntruderPayloadProcessor(extenderCallbacks, settingsTabModel));
     }
 
 }

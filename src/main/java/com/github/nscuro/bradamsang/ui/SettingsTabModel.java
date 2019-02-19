@@ -8,7 +8,6 @@ import lombok.ToString;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.swing.SwingUtilities;
-import java.nio.file.Path;
 import java.util.List;
 import java.util.Observable;
 import java.util.Optional;
@@ -19,11 +18,7 @@ public class SettingsTabModel extends Observable implements OptionsProvider {
 
     private String radamsaCommand;
 
-    private Path radamsaOutputDir;
-
     private Integer payloadCount;
-
-    private Path intruderInputDir;
 
     private boolean useCustomSeed;
 
@@ -61,22 +56,6 @@ public class SettingsTabModel extends Observable implements OptionsProvider {
         }
     }
 
-    @Nonnull
-    @Override
-    public Optional<Path> getRadamsaOutputDirectoryPath() {
-        return Optional.ofNullable(radamsaOutputDir);
-    }
-
-    @Nonnull
-    @Override
-    public Optional<Path> getIntruderInputDirectoryPath() {
-        if (isWslAvailableAndEnabled()) {
-            return Optional.ofNullable(intruderInputDir);
-        } else {
-            return Optional.empty();
-        }
-    }
-
     @Override
     public boolean isWslModeEnabled() {
         return wslModeEnabled;
@@ -107,8 +86,6 @@ public class SettingsTabModel extends Observable implements OptionsProvider {
      */
     void resetWslRelatedValues() {
         this.radamsaCommand = null;
-        this.radamsaOutputDir = null;
-        this.intruderInputDir = null;
     }
 
     void setRadamsaCommand(@Nullable final String radamsaCommand) {
@@ -116,18 +93,8 @@ public class SettingsTabModel extends Observable implements OptionsProvider {
         signalChangeAndNotifyObservers();
     }
 
-    void setRadamsaOutputDir(@Nullable final Path radamsaOutputDir) {
-        this.radamsaOutputDir = radamsaOutputDir;
-        signalChangeAndNotifyObservers();
-    }
-
     void setPayloadCount(@Nullable final Integer payloadCount) {
         this.payloadCount = payloadCount;
-        signalChangeAndNotifyObservers();
-    }
-
-    void setIntruderInputDir(@Nullable final Path intruderInputDir) {
-        this.intruderInputDir = intruderInputDir;
         signalChangeAndNotifyObservers();
     }
 
