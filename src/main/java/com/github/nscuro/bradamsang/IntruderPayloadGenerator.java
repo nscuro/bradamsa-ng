@@ -81,16 +81,6 @@ class IntruderPayloadGenerator implements IIntruderPayloadGenerator {
                 return null;
             }
 
-
-            // Make sure the input directory is accessible
-            if (!payloadFilesDirectoryPath.toFile().exists()
-                    || !payloadFilesDirectoryPath.toFile().isDirectory()) {
-                extenderCallbacks.printError(format("Payload input path \"%s\" does not exist "
-                        + "or is not a directory", payloadFilesDirectoryPath));
-
-                return null;
-            }
-
             try {
                 generatePayloads(baseValue);
             } catch (RadamsaException e) {
@@ -108,14 +98,13 @@ class IntruderPayloadGenerator implements IIntruderPayloadGenerator {
                     .ifPresent(payloadFiles::addAll);
 
             if (payloadFiles.isEmpty()) {
-                extenderCallbacks.printError(format("No payload files have been found in \"%s\". "
-                        + "Please check your path settings!", payloadFilesDirectoryPath));
+                extenderCallbacks.printError(format("No payload files have been found in \"%s\"", payloadFilesDirectoryPath));
 
                 return null;
             }
         }
 
-        final File file = payloadFiles.get(currentPayloadFileIndex);
+        final File file = payloadFiles.get(currentPayloadFileIndex++);
         try {
             byte[] payload = Files.readAllBytes(file.toPath());
 
@@ -123,13 +112,9 @@ class IntruderPayloadGenerator implements IIntruderPayloadGenerator {
                 extenderCallbacks.printError(format("\"%s\" was not deleted", file));
             }
 
-            currentPayloadFileIndex++;
-
             return payload;
         } catch (IOException e) {
             BurpUtils.printStackTrace(extenderCallbacks, e);
-
-            currentPayloadFileIndex++;
 
             return null;
         }
