@@ -20,8 +20,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ItemEvent;
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 import java.util.Optional;
 import java.util.regex.Pattern;
@@ -62,8 +60,6 @@ public class SettingsTabController implements ITab {
     public Component getUiComponent() {
         // Register ActionListener
         view.getRadamsaCommandButton().addActionListener(this::onRadamsaCommandButtonPressed);
-        view.getRadamsaOutputDirButton().addActionListener(this::onRadamsaOutputDirButtonPressed);
-        view.getIntruderInputDirButton().addActionListener(this::onIntruderInputDirButtonPressed);
 
         // Register DocumentListener
         addDocumentChangedListener(view.getRadamsaCommandTextField(), this::onRadamsaCommandDocumentChanged);
@@ -128,42 +124,6 @@ public class SettingsTabController implements ITab {
         }
     }
 
-    private void onRadamsaOutputDirButtonPressed(final ActionEvent actionEvent) {
-        final Optional<Path> outputDir = view
-                .getPathFromFileChooser(JFileChooser.DIRECTORIES_ONLY)
-                .map(Paths::get)
-                .filter(path -> path.toFile().isDirectory());
-
-        if (outputDir.isPresent()) {
-            model.setRadamsaOutputDir(outputDir.get());
-            model.setIntruderInputDir(outputDir.get());
-        } else {
-            view.showWarningDialog("No or nonexistent intruder input directory selected.");
-        }
-    }
-
-    private void onIntruderInputDirButtonPressed(final ActionEvent actionEvent) {
-        final Optional<Path> inputDir = view
-                .getPathFromFileChooser(JFileChooser.DIRECTORIES_ONLY)
-                .map(Paths::get)
-                .filter(path -> path.toFile().isDirectory());
-
-        if (inputDir.isPresent()) {
-            try {
-                // We need a valid WSL path so that Radamsa knows where to dump its output to.
-                // If we can't get that for some reason, setting the intruder input dir alone doesn't make any sense
-                model.setRadamsaOutputDir(Paths.get(wslHelper.getWslPathForNativePath(inputDir.get())));
-                model.setIntruderInputDir(inputDir.get());
-            } catch (IOException | WslException | IllegalArgumentException e) {
-                BurpUtils.printStackTrace(extenderCallbacks, e);
-                view.showErrorDialog(format("Couldn't convert Intruder input path to Radamsa "
-                        + "WSL output path:\n%s", e.getMessage()));
-            }
-        } else {
-            view.showWarningDialog("No or nonexistent intruder input directory selected");
-        }
-    }
-
     private void onRadamsaCommandDocumentChanged(@Nullable final String newText) {
         if (model.isWslAvailableAndEnabled()) {
             if (newText != null && RADAMSA_COMMAND_PATTERN.matcher(newText).matches()) {
@@ -209,8 +169,6 @@ public class SettingsTabController implements ITab {
         // Not all changes in the model are reflected in the UI, depending on if
         // WSL mode is enabled or not. To be safe, we just clear 'em all
         view.getRadamsaCommandTextField().setText(null);
-        view.getRadamsaOutputDirTextField().setText(null);
-        view.getIntruderInputDirTextField().setText(null);
     }
 
     private void onWslDistroComboBoxItemStateChanged(final ItemEvent itemEvent) {

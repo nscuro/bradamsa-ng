@@ -5,6 +5,7 @@ import burp.IIntruderPayloadGenerator;
 import com.github.nscuro.bradamsang.radamsa.Parameters;
 import com.github.nscuro.bradamsang.radamsa.Radamsa;
 import com.github.nscuro.bradamsang.radamsa.RadamsaException;
+import com.github.nscuro.bradamsang.wsl.WslPathConverter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,9 +30,13 @@ class IntruderPayloadGenerator implements IIntruderPayloadGenerator {
 
     private final OptionsProvider optionsProvider;
 
+    private final WslPathConverter wslPathConverter;
+
     private final Radamsa radamsa;
 
     private final List<File> payloadFiles;
+
+    private Path payloadFilesDirectoryPath;
 
     private int currentPayloadFileIndex;
 
@@ -39,18 +44,13 @@ class IntruderPayloadGenerator implements IIntruderPayloadGenerator {
 
     IntruderPayloadGenerator(@Nonnull final IBurpExtenderCallbacks extenderCallbacks,
                              @Nonnull final OptionsProvider optionsProvider,
+                             @Nonnull final WslPathConverter wslPathConverter,
                              @Nonnull final Radamsa radamsa) {
-        this(extenderCallbacks, optionsProvider, radamsa, new ArrayList<>());
-    }
-
-    private IntruderPayloadGenerator(final IBurpExtenderCallbacks extenderCallbacks,
-                                     final OptionsProvider optionsProvider,
-                                     final Radamsa radamsa,
-                                     final List<File> payloadFiles) {
         this.extenderCallbacks = extenderCallbacks;
         this.optionsProvider = optionsProvider;
+        this.wslPathConverter = wslPathConverter;
         this.radamsa = radamsa;
-        this.payloadFiles = payloadFiles;
+        this.payloadFiles = new ArrayList<>();
     }
 
     @Override
@@ -71,19 +71,12 @@ class IntruderPayloadGenerator implements IIntruderPayloadGenerator {
         if (firstRun) {
             firstRun = false;
 
-            final Path payloadFilesDirectoryPath = optionsProvider
-                    .getIntruderInputDirectoryPath()
-                    .orElseGet(() -> optionsProvider
-                            .getRadamsaOutputDirectoryPath()
-                            .orElseThrow(() -> new IllegalStateException("Neither Intruder input dir "
-                                    + "nor Radamsa output dir provided"))
-                    );
-
-            // Make sure the input directory is accessible
-            if (!payloadFilesDirectoryPath.toFile().exists()
-                    || !payloadFilesDirectoryPath.toFile().isDirectory()) {
-                extenderCallbacks.printError(format("Payload input path \"%s\" does not exist "
-                        + "or is not a directory", payloadFilesDirectoryPath));
+            // Create a temporary directory put the payload files in
+            try {
+                payloadFilesDirectoryPath = Files.createTempDirectory("bradamsa-ng_");
+                payloadFilesDirectoryPath.toFile().deleteOnExit();
+            } catch (IOException e) {
+                BurpUtils.printStackTrace(extenderCallbacks, e);
 
                 return null;
             }
@@ -105,14 +98,13 @@ class IntruderPayloadGenerator implements IIntruderPayloadGenerator {
                     .ifPresent(payloadFiles::addAll);
 
             if (payloadFiles.isEmpty()) {
-                extenderCallbacks.printError(format("No payload files have been found in \"%s\". "
-                        + "Please check your path settings!", payloadFilesDirectoryPath));
+                extenderCallbacks.printError(format("No payload files have been found in \"%s\"", payloadFilesDirectoryPath));
 
                 return null;
             }
         }
 
-        final File file = payloadFiles.get(currentPayloadFileIndex);
+        final File file = payloadFiles.get(currentPayloadFileIndex++);
         try {
             byte[] payload = Files.readAllBytes(file.toPath());
 
@@ -120,13 +112,9 @@ class IntruderPayloadGenerator implements IIntruderPayloadGenerator {
                 extenderCallbacks.printError(format("\"%s\" was not deleted", file));
             }
 
-            currentPayloadFileIndex++;
-
             return payload;
         } catch (IOException e) {
             BurpUtils.printStackTrace(extenderCallbacks, e);
-
-            currentPayloadFileIndex++;
 
             return null;
         }
@@ -139,6 +127,7 @@ class IntruderPayloadGenerator implements IIntruderPayloadGenerator {
 
         // Reset payload list
         payloadFiles.clear();
+        payloadFilesDirectoryPath.toFile().delete();
         currentPayloadFileIndex = 0;
     }
 
@@ -150,12 +139,19 @@ class IntruderPayloadGenerator implements IIntruderPayloadGenerator {
                 .count(optionsProvider.getCount().orElse(null))
                 .seed(optionsProvider.getSeed().orElse(null))
                 .baseValue(baseValue)
-                .outputDirectoryPath(optionsProvider
-                        .getRadamsaOutputDirectoryPath()
-                        .orElseThrow(() -> new IllegalArgumentException("No Radamsa output directory provided")))
+                .outputDirectoryPath(determineRadamsaOutputDirectoryPath())
                 .build();
 
         radamsa.fuzz(parameters);
+    }
+
+    @Nonnull
+    private Path determineRadamsaOutputDirectoryPath() {
+        if (optionsProvider.isWslModeEnabled()) {
+            return wslPathConverter.convertToUnixPath(payloadFilesDirectoryPath);
+        } else {
+            return payloadFilesDirectoryPath;
+        }
     }
 
 }
