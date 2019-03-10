@@ -7,6 +7,7 @@ import com.github.nscuro.bradamsang.BurpUtils;
 import com.github.nscuro.bradamsang.io.WslCommandExecutor;
 import com.github.nscuro.bradamsang.wsl.WslException;
 import com.github.nscuro.bradamsang.wsl.WslHelper;
+import org.apache.commons.lang3.StringUtils;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -33,6 +34,8 @@ import static java.lang.String.format;
 public class SettingsTabController implements ITab {
 
     private static final Pattern RADAMSA_COMMAND_PATTERN = Pattern.compile("^\\S*radamsa(?:\\.[a-z]{1,3})?$", Pattern.CASE_INSENSITIVE);
+
+    private static final Color DEFAULT_FOREGROUND_COLOR = UIManager.getDefaults().getColor("TextField.foreground");
 
     private static final Color ERROR_COLOR = Color.RED;
 
@@ -74,19 +77,16 @@ public class SettingsTabController implements ITab {
         view.getWslDistroComboBox().addItemListener(this::onWslDistroComboBoxItemStateChanged);
 
         // Set model of Spinner
-        view.getPayloadCountSpinner().setModel(new SpinnerNumberModel(1, 1, 1000, 1));
+        view.getPayloadCountSpinner().setModel(new SpinnerNumberModel(1, 1, Integer.MAX_VALUE, 1));
 
         // Register ChangeListener
-        view.getPayloadCountSpinner().addChangeListener(this::onPayloadCountSpinnderStateChanged);
+        view.getPayloadCountSpinner().addChangeListener(this::onPayloadCountSpinnerStateChanged);
 
         // Register the view as observer for changes made in the model
         model.addObserver(view);
 
-        // Try to automatically find Radamsa binary in $PATH
-        findRadamsaBinaryInPath().ifPresent(radamsaPath -> {
-            extenderCallbacks.printOutput("Found Radamsa binary at " + radamsaPath);
-            model.setRadamsaCommand(radamsaPath);
-        });
+        // Try to automatically find Radamsa binary
+        autoDetectAndApplyRadamsaCommand();
 
         // Determine if WSL is available
         try {
@@ -124,7 +124,7 @@ public class SettingsTabController implements ITab {
 
             if (radamsaFile.isFile() && radamsaFile.canExecute()) {
                 model.setRadamsaCommand(command.get());
-                view.getRadamsaCommandTextField().setForeground(getDefaultTextFieldForegroundColor());
+                view.getRadamsaCommandTextField().setForeground(DEFAULT_FOREGROUND_COLOR);
             } else {
                 view.showWarningDialog("The selected file does not exist or is not executable.");
             }
@@ -140,8 +140,13 @@ public class SettingsTabController implements ITab {
                 // can be found inside the WSL guest - be it as command in $PATH or as actual file.
                 try {
                     if (wslHelper.which(newText).isPresent() || wslHelper.isExistingFile(newText)) {
-                        model.setRadamsaCommand(newText);
-                        view.getRadamsaCommandTextField().setForeground(getDefaultTextFieldForegroundColor());
+                        if (!StringUtils.equals(model.getRadamsaCommand().orElse(null), newText)) {
+                            model.setRadamsaCommand(newText);
+                        }
+
+                        view.getRadamsaCommandTextField().setForeground(DEFAULT_FOREGROUND_COLOR);
+                    } else {
+                        view.getRadamsaCommandTextField().setForeground(ERROR_COLOR);
                     }
                 } catch (IOException | WslException e) {
                     view.getRadamsaCommandTextField().setForeground(ERROR_COLOR);
@@ -156,7 +161,7 @@ public class SettingsTabController implements ITab {
         if (newText != null && newText.matches("^[0-9]+$")) {
             try {
                 model.setCustomSeed(Long.parseLong(newText));
-                view.getCustomSeedTextField().setForeground(getDefaultTextFieldForegroundColor());
+                view.getCustomSeedTextField().setForeground(DEFAULT_FOREGROUND_COLOR);
             } catch (NumberFormatException e) {
                 model.setCustomSeed(null);
                 view.getCustomSeedTextField().setForeground(ERROR_COLOR);
@@ -175,9 +180,7 @@ public class SettingsTabController implements ITab {
         model.resetWslRelatedValues();
         model.setWslModeEnabled(itemEvent.getStateChange() == ItemEvent.SELECTED);
 
-        // Not all changes in the model are reflected in the UI, depending on if
-        // WSL mode is enabled or not. To be safe, we just clear 'em all
-        view.getRadamsaCommandTextField().setText(null);
+        autoDetectAndApplyRadamsaCommand();
     }
 
     private void onWslDistroComboBoxItemStateChanged(final ItemEvent itemEvent) {
@@ -187,20 +190,12 @@ public class SettingsTabController implements ITab {
             wslHelper.setWslCommandExecutor(new WslCommandExecutor(selectedDistro));
             model.setWslDistroName(selectedDistro);
 
-            findRadamsaBinaryInWslPath().ifPresent(radamsaPath -> {
-                model.setRadamsaCommand(radamsaPath);
-                onRadamsaCommandDocumentChanged(radamsaPath);
-            });
+            autoDetectAndApplyRadamsaCommand();
         }
     }
 
-    private void onPayloadCountSpinnderStateChanged(final ChangeEvent changeEvent) {
+    private void onPayloadCountSpinnerStateChanged(final ChangeEvent changeEvent) {
         model.setPayloadCount(((Number) view.getPayloadCountSpinner().getValue()).intValue());
-    }
-
-    @Nonnull
-    private Color getDefaultTextFieldForegroundColor() {
-        return UIManager.getDefaults().getColor("TextField.foreground");
     }
 
     @Nonnull
@@ -222,6 +217,14 @@ public class SettingsTabController implements ITab {
         } catch (IOException | WslException e) {
             BurpUtils.printStackTrace(extenderCallbacks, e);
             return Optional.empty();
+        }
+    }
+
+    private void autoDetectAndApplyRadamsaCommand() {
+        if (model.isWslAvailableAndEnabled()) {
+            model.setRadamsaCommand(findRadamsaBinaryInWslPath().orElse(null));
+        } else {
+            model.setRadamsaCommand(findRadamsaBinaryInPath().orElse(null));
         }
     }
 

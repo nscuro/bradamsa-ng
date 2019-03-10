@@ -100,7 +100,9 @@ public class WslHelper {
                 .execute(Arrays.asList(COMMAND_WHICH, command), null);
 
         if (executionResult.getExitCode() == 0) {
-            return executionResult.getOutput();
+            return executionResult
+                    .getOutput()
+                    .map(String::trim);
         } else {
             return Optional.empty();
         }

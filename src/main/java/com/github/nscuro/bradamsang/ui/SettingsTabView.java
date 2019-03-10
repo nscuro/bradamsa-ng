@@ -5,6 +5,7 @@ import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.uiDesigner.core.Spacer;
 import lombok.AccessLevel;
 import lombok.Getter;
+import org.apache.commons.lang3.StringUtils;
 
 import javax.annotation.Nullable;
 import javax.swing.BorderFactory;
@@ -53,12 +54,13 @@ public class SettingsTabView implements Observer {
         final SettingsTabModel model = (SettingsTabModel) observable;
 
         // Update components related to Radamsa command
-        if (!model.isWslAvailableAndEnabled()) {
-            // When in WSL mode, the user manually enters a command. There is no
-            // need to refresh the text fields content. When not in WSL mode however,
-            // an executable is selected via file dialog, so we need to reflect this in the UI.
-            model.getRadamsaCommand().ifPresent(radamsaCommandTextField::setText);
-        }
+        radamsaCommandTextField
+                .setText(model.getRadamsaCommand()
+                        // Avoid lags by only updating the text when its actually different.
+                        // When entering the command manually, updating the field with the
+                        // just-entered value isn't necessary
+                        .filter(command -> !StringUtils.equals(command, radamsaCommandTextField.getText()))
+                        .orElse(null));
         radamsaCommandTextField.setEditable(model.isWslAvailableAndEnabled());
         radamsaCommandButton.setEnabled(!model.isWslAvailableAndEnabled());
 
@@ -71,7 +73,6 @@ public class SettingsTabView implements Observer {
         if (wslDistroComboBox.getItemCount() == 0
                 && model.getAvailableWslDistros() != null
                 && !model.getAvailableWslDistros().isEmpty()) {
-            // TODO: Make a smarter decision here
             model.getAvailableWslDistros().forEach(wslDistroComboBox::addItem);
         }
     }
@@ -125,7 +126,7 @@ public class SettingsTabView implements Observer {
         radamsaCommandTextField = new JTextField();
         panel1.add(radamsaCommandTextField, new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED, null, new Dimension(150, -1), null, 0, false));
         radamsaCommandButton = new JButton();
-        radamsaCommandButton.setText("..");
+        radamsaCommandButton.setText("...");
         panel1.add(radamsaCommandButton, new GridConstraints(0, 2, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
         final Spacer spacer1 = new Spacer();
         mainPanel.add(spacer1, new GridConstraints(4, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_VERTICAL, 1, GridConstraints.SIZEPOLICY_WANT_GROW, null, null, null, 0, false));
