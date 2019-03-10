@@ -139,7 +139,7 @@ public class SettingsTabController implements ITab {
                 // Provide at least SOME form of feedback and check if the provided command
                 // can be found inside the WSL guest - be it as command in $PATH or as actual file.
                 try {
-                    if (wslHelper.isCommandInWslPath(newText) || wslHelper.isExistingFile(newText)) {
+                    if (wslHelper.which(newText).isPresent() || wslHelper.isExistingFile(newText)) {
                         model.setRadamsaCommand(newText);
                         view.getRadamsaCommandTextField().setForeground(getDefaultTextFieldForegroundColor());
                     }
@@ -186,6 +186,11 @@ public class SettingsTabController implements ITab {
         if (selectedDistro != null && model.getAvailableWslDistros().contains(selectedDistro)) {
             wslHelper.setWslCommandExecutor(new WslCommandExecutor(selectedDistro));
             model.setWslDistroName(selectedDistro);
+
+            findRadamsaBinaryInWslPath().ifPresent(radamsaPath -> {
+                model.setRadamsaCommand(radamsaPath);
+                onRadamsaCommandDocumentChanged(radamsaPath);
+            });
         }
     }
 
@@ -208,6 +213,16 @@ public class SettingsTabController implements ITab {
                 .filter(File::exists)
                 .map(File::getAbsolutePath)
                 .findFirst();
+    }
+
+    @Nonnull
+    private Optional<String> findRadamsaBinaryInWslPath() {
+        try {
+            return wslHelper.which("radamsa");
+        } catch (IOException | WslException e) {
+            BurpUtils.printStackTrace(extenderCallbacks, e);
+            return Optional.empty();
+        }
     }
 
 }

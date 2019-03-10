@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class WslHelper {
@@ -88,25 +89,21 @@ public class WslHelper {
                 .orElseGet(Collections::emptyList);
     }
 
-    /**
-     * Check if a given command is in the $PATH of a WSL guest.
-     *
-     * @param command The command to check
-     * @return true when the command is inside the WSL guest's $PATH, otherwise false
-     * @throws IOException  When execution of {@value #COMMAND_WHICH} inside the WSL guest failed
-     * @throws WslException When no {@link WslCommandExecutor} is set
-     */
-    public boolean isCommandInWslPath(@Nullable final String command) throws IOException, WslException {
+    public Optional<String> which(@Nullable final String command) throws IOException, WslException {
         if (wslCommandExecutor == null) {
             throw new WslException(EXCEPTION_MSG_NO_WSL_COMMAND_EXECUTOR_SET);
         } else if (command == null) {
-            return false;
+            return Optional.empty();
         }
 
         final ExecutionResult executionResult = wslCommandExecutor
-                .execute(Arrays.asList(COMMAND_WHICH, command));
+                .execute(Arrays.asList(COMMAND_WHICH, command), null);
 
-        return executionResult.getExitCode() == 0;
+        if (executionResult.getExitCode() == 0) {
+            return executionResult.getOutput();
+        } else {
+            return Optional.empty();
+        }
     }
 
     /**
