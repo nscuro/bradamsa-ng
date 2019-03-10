@@ -20,6 +20,9 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ItemEvent;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.regex.Pattern;
@@ -78,6 +81,12 @@ public class SettingsTabController implements ITab {
 
         // Register the view as observer for changes made in the model
         model.addObserver(view);
+
+        // Try to automatically find Radamsa binary in $PATH
+        findRadamsaBinaryInPath().ifPresent(radamsaPath -> {
+            extenderCallbacks.printOutput("Found Radamsa binary at " + radamsaPath);
+            model.setRadamsaCommand(radamsaPath);
+        });
 
         // Determine if WSL is available
         try {
@@ -187,6 +196,18 @@ public class SettingsTabController implements ITab {
     @Nonnull
     private Color getDefaultTextFieldForegroundColor() {
         return UIManager.getDefaults().getColor("TextField.foreground");
+    }
+
+    @Nonnull
+    private Optional<String> findRadamsaBinaryInPath() {
+        return Arrays
+                .stream(System.getenv("PATH").split(Pattern.quote(File.pathSeparator)))
+                .map(Paths::get)
+                .map(path -> path.resolve("radamsa"))
+                .map(Path::toFile)
+                .filter(File::exists)
+                .map(File::getAbsolutePath)
+                .findFirst();
     }
 
 }
