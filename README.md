@@ -23,6 +23,11 @@ With WSL however, we can compile and run Radamsa in its natural habitat - hell,
 we can even run it from the Windows host (`echo "test" | wsl -d Ubuntu -e radamsa`).
 With *bradamsa-ng*, these new possibilities can now be leveraged in Burp.
 
+## Requirements
+
+* Java >= 8 ([Burp >= 2.0.14 ships with OpenJDK 11](https://twitter.com/Burp_Suite/status/1088829534600921090))
+* Burp Suite obviously
+
 ## Installation
 
 TODO
