@@ -14,10 +14,13 @@ script:
 
 after_success:
   - ./mvnw coveralls:report
+  - cp ./target/bradamsa-ng-*-jar-with-dependencies.jar ./bradamsa-ng.jar
+  - wget -c https://raw.githubusercontent.com/probonopd/uploadtool/3bf89c3cf3de8f8eee8b48ab0242597d72115d1d/upload.sh
+  - bash upload.sh bradamsa-ng.jar
 
 branches:
-  only:
-    - master
+  except:
+    - /^(?i:continuous)$/
 
 notifications:
   email:
