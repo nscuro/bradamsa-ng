@@ -97,7 +97,7 @@ public class WslHelper {
         }
 
         final ExecutionResult executionResult = wslCommandExecutor
-                .execute(Arrays.asList(COMMAND_WHICH, command), null);
+                .execute(Arrays.asList(COMMAND_WHICH, command));
 
         if (executionResult.getExitCode() == 0) {
             return executionResult
