@@ -44,7 +44,7 @@ With *bradamsa-ng*, these new possibilities can now be leveraged in Burp.
 
 ## Installation
 
-* [Build](#building) the extension
+* [Build](#building) the extension or download a [release](https://github.com/nscuro/bradamsa-ng/releases)
 * Open Burp and navigate to the *Extender* tab
 * Click *Add*
 * In the dialog that just opened, select the extension type *Java*
