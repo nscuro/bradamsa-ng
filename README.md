@@ -10,14 +10,16 @@
 
 ## Index
 
-* [Introduction](#introduction)
-* [Requirements](#requirements)
-* [Installation](#installation)
-* [Building](#building)
-* [Usage](#usage)
-  * [Intruder Payload Generator](#intruder-payload-generator)
-  * [Intruder Payload Processor](#intruder-payload-processor)
-  * [WSL mode](#wsl-mode)
+- [bradamsa-ng](#bradamsa-ng)
+  - [Index](#index)
+  - [Introduction](#introduction)
+  - [Requirements](#requirements)
+  - [Installation](#installation)
+  - [Building](#building)
+  - [Usage](#usage)
+    - [Intruder Payload Generator](#intruder-payload-generator)
+    - [Intruder Payload Processor](#intruder-payload-processor)
+    - [WSL mode](#wsl-mode)
 
 ## Introduction
 
@@ -77,11 +79,18 @@ The installable extension JAR can now be found at `target/bradamsa-ng-${version}
 
 ### Intruder Payload Generator
 
-TODO
+* In Intruder's *Payloads* tab, select the payload type *Extension-generated*:
+  ![Payload Type](.github/payload-generator_payload-type.png)
+* Next, choose *bradamsa-ng* as generator under *Payload Options*:
+  ![Payload Generator](.github/payload-generator_generator-extension.png)
+* Set the amount of payloads you want to generate in the *bradamsa-ng* tab under *Payload Count*
+  * **All** payloads will be generated before the first request is sent
+* Start the Intruder attack
+  * Please note that the *Battering Ram* attack is not supported
 
 ### Intruder Payload Processor
 
-TODO
+Not implemented yet.
 
 ### WSL mode
 
