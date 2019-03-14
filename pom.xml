@@ -57,6 +57,7 @@
             <groupId>net.portswigger.burp.extender</groupId>
             <artifactId>burp-extender-api</artifactId>
             <version>${burp-extender-api.version}</version>
+            <scope>provided</scope>
         </dependency>
 
         <dependency>
