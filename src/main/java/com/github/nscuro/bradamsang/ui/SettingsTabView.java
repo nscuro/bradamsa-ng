@@ -54,13 +54,13 @@ public class SettingsTabView implements Observer {
         final SettingsTabModel model = (SettingsTabModel) observable;
 
         // Update components related to Radamsa command
-        radamsaCommandTextField
-                .setText(model.getRadamsaCommand()
-                        // Avoid lags by only updating the text when its actually different.
-                        // When entering the command manually, updating the field with the
-                        // just-entered value isn't necessary
-                        .filter(command -> !StringUtils.equals(command, radamsaCommandTextField.getText()))
-                        .orElse(null));
+        final String radamsaCommandFromModel = model.getRadamsaCommand().orElse(null);
+        if (!StringUtils.equals(radamsaCommandFromModel, radamsaCommandTextField.getText())) {
+            // Avoid input lags by only updating the text when its actually different.
+            // When entering the command manually, updating the field with the
+            // just-entered value isn't necessary
+            radamsaCommandTextField.setText(radamsaCommandFromModel);
+        }
         radamsaCommandTextField.setEditable(model.isWslAvailableAndEnabled());
         radamsaCommandButton.setEnabled(!model.isWslAvailableAndEnabled());
 
