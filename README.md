@@ -8,6 +8,17 @@
 
 ![Screenshot](.github/screenshot.png)
 
+## Index
+
+* [Introduction](#introduction)
+* [Requirements](#requirements)
+* [Installation](#installation)
+* [Building](#building)
+* [Usage](#usage)
+  * [Intruder Payload Generator](#intruder-payload-generator)
+  * [Intruder Payload Processor](#intruder-payload-processor)
+  * [WSL mode](#wsl-mode)
+
 ## Introduction
 
 *bradamsa-ng* is a [Burp Suite](https://portswigger.net/burp/) extension that brings the power of the amazing 
