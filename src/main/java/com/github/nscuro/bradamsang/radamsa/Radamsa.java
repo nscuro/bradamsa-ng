@@ -82,7 +82,7 @@ public class Radamsa {
             final ExecutionResult executionResult = commandExecutor.execute(versionCommand);
 
             if (executionResult.getExitCode() != 0) {
-                throw new IOException(format("Failed to verify radamsa command: \"%s\" returned with exit code %d", versionCommand, executionResult.getExitCode()));
+                return false;
             }
 
             radamsaVersion = executionResult.getOutput()

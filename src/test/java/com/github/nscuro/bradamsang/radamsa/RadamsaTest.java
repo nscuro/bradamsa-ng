@@ -7,12 +7,15 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.mockito.ArgumentCaptor;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
@@ -20,6 +23,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 
 class RadamsaTest {
 
@@ -65,10 +69,69 @@ class RadamsaTest {
         }
 
         @Test
-        void shouldThrowExceptionWhenOutputDirectoryIsNull() throws IOException {
+        void shouldThrowExceptionWhenOutputDirectoryIsNull() {
             assertThatExceptionOfType(RadamsaException.class)
                     .isThrownBy(() -> radamsa.fuzz(getDefaultParametersBuilder().outputDirectoryPath(null).build()))
                     .withMessageContaining("output directory");
+        }
+
+        @Test
+        void shouldCorrectlyExecuteRadamsaCommand() throws IOException, RadamsaException {
+            final Parameters parameters = getDefaultParametersBuilder().build();
+
+            final ArgumentCaptor<List<String>> commandLineArgumentCaptor = ArgumentCaptor.forClass(List.class);
+
+            radamsa.fuzz(parameters);
+
+            verify(commandExecutorMock).execute(commandLineArgumentCaptor.capture(), eq(parameters.getBaseValue()));
+
+            assertThat(commandLineArgumentCaptor.getValue())
+                    .containsExactlyInAnyOrder(
+                            DUMMY_RADAMSA_COMMAND,
+                            "-n", parameters.getCount().toString(),
+                            "-s", parameters.getSeed().toString(),
+                            "-o", "/radamsa_%n.out");
+        }
+
+        @ParameterizedTest(name = "[{index}] count={0}")
+        @CsvSource({
+                ",",
+                "-1,",
+                "0,"
+        })
+        void shouldExecuteRadamsaCommandWithoutCountFlagWhenCountIsNullOrLessOrEqualToZero(final Integer count) throws RadamsaException, IOException {
+            final ArgumentCaptor<List<String>> commandLineArgumentCaptor = ArgumentCaptor.forClass(List.class);
+
+            radamsa.fuzz(getDefaultParametersBuilder().count(count).build());
+
+            verify(commandExecutorMock).execute(commandLineArgumentCaptor.capture(), any(byte[].class));
+
+            assertThat(commandLineArgumentCaptor.getValue())
+                    .doesNotContain("-n")
+                    .doesNotContain(String.valueOf(count));
+        }
+
+        @Test
+        void shouldExecuteRadamsaCommandWithoutSeedFlagWhenSeedIsNull() throws IOException, RadamsaException {
+            final ArgumentCaptor<List<String>> commandLineArgumentCaptor = ArgumentCaptor.forClass(List.class);
+
+            radamsa.fuzz(getDefaultParametersBuilder().seed(null).build());
+
+            verify(commandExecutorMock).execute(commandLineArgumentCaptor.capture(), any(byte[].class));
+
+            assertThat(commandLineArgumentCaptor.getValue())
+                    .doesNotContain("-s")
+                    .doesNotContain("null");
+        }
+
+        @Test
+        void shouldThrowExceptionWhenExecutingCommandFails() throws IOException {
+            given(commandExecutorMock.execute(any(List.class), any(byte[].class)))
+                    .willThrow(IOException.class);
+
+            assertThatExceptionOfType(RadamsaException.class)
+                    .isThrownBy(() -> radamsa.fuzz(getDefaultParametersBuilder().build()))
+                    .withCauseInstanceOf(IOException.class);
         }
 
         private ParametersBuilder getDefaultParametersBuilder() {
@@ -99,6 +162,16 @@ class RadamsaTest {
         })
         void shouldReturnFalseWhenCommandIsInvalid(final String command) throws RadamsaException {
             assertThat(radamsa.isValidRadamsaCommand(command))
+                    .isFalse();
+        }
+
+        @ParameterizedTest
+        @ValueSource(ints = {-1, 1})
+        void shouldReturnFalseWhenExitCodeIsNotZero(final int exitCode) throws IOException, RadamsaException {
+            given(commandExecutorMock.execute(any()))
+                    .willReturn(new ExecutionResult(exitCode, DUMMY_RADAMSA_VERSION));
+
+            assertThat(radamsa.isValidRadamsaCommand(DUMMY_RADAMSA_COMMAND))
                     .isFalse();
         }
 
