@@ -231,8 +231,8 @@ public class SettingsTabController implements ITab {
 
         if (radamsaBinaryPath != null) {
             extenderCallbacks.printOutput("Radamsa binary was found at " + radamsaBinaryPath);
-            model.setRadamsaCommand(radamsaBinaryPath);
         }
+        model.setRadamsaCommand(radamsaBinaryPath);
     }
 
 }
