@@ -42,10 +42,10 @@ class IntruderPayloadGenerator implements IIntruderPayloadGenerator {
 
     private boolean firstRun = true;
 
-    IntruderPayloadGenerator(@Nonnull final IBurpExtenderCallbacks extenderCallbacks,
-                             @Nonnull final OptionsProvider optionsProvider,
-                             @Nonnull final WslPathConverter wslPathConverter,
-                             @Nonnull final Radamsa radamsa) {
+    IntruderPayloadGenerator(final IBurpExtenderCallbacks extenderCallbacks,
+                             final OptionsProvider optionsProvider,
+                             final WslPathConverter wslPathConverter,
+                             final Radamsa radamsa) {
         this.extenderCallbacks = extenderCallbacks;
         this.optionsProvider = optionsProvider;
         this.wslPathConverter = wslPathConverter;
@@ -131,7 +131,7 @@ class IntruderPayloadGenerator implements IIntruderPayloadGenerator {
         currentPayloadFileIndex = 0;
     }
 
-    private void generatePayloads(@Nonnull final byte[] baseValue) throws RadamsaException {
+    private void generatePayloads(final byte[] baseValue) throws RadamsaException {
         LOGGER.debug("Generating payloads");
 
         final Parameters parameters = Parameters

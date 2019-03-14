@@ -18,19 +18,21 @@ class IntruderPayloadGeneratorFactory implements IIntruderPayloadGeneratorFactor
 
     private final OptionsProvider optionsProvider;
 
-    IntruderPayloadGeneratorFactory(@Nonnull final IBurpExtenderCallbacks extenderCallbacks,
-                                    @Nonnull final OptionsProvider optionsProvider) {
+    IntruderPayloadGeneratorFactory(final IBurpExtenderCallbacks extenderCallbacks,
+                                    final OptionsProvider optionsProvider) {
         this.extenderCallbacks = extenderCallbacks;
         this.optionsProvider = optionsProvider;
     }
 
+    @Nonnull
     @Override
     public String getGeneratorName() {
         return BurpExtension.EXTENSION_NAME;
     }
 
+    @Nonnull
     @Override
-    public IIntruderPayloadGenerator createNewInstance(@Nonnull final IIntruderAttack intruderAttack) {
+    public IIntruderPayloadGenerator createNewInstance(final IIntruderAttack intruderAttack) {
         final CommandExecutor commandExecutor;
 
         if (optionsProvider.isWslModeEnabled()) {

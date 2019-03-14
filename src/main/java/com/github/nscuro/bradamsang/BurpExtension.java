@@ -7,13 +7,11 @@ import com.github.nscuro.bradamsang.ui.SettingsTabModel;
 import com.github.nscuro.bradamsang.ui.SettingsTabView;
 import com.github.nscuro.bradamsang.wsl.WslHelper;
 
-import javax.annotation.Nonnull;
-
 public class BurpExtension {
 
     public static final String EXTENSION_NAME = "bradamsa-ng";
 
-    public void registerExtension(@Nonnull final IBurpExtenderCallbacks extenderCallbacks) {
+    public void registerExtension(final IBurpExtenderCallbacks extenderCallbacks) {
         extenderCallbacks.setExtensionName(EXTENSION_NAME);
 
         final SettingsTabModel settingsTabModel = new SettingsTabModel();

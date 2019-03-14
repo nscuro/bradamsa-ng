@@ -2,7 +2,6 @@ package com.github.nscuro.bradamsang;
 
 import burp.IBurpExtenderCallbacks;
 
-import javax.annotation.Nonnull;
 import java.io.PrintWriter;
 
 public class BurpUtils {
@@ -16,8 +15,8 @@ public class BurpUtils {
      * @param extenderCallbacks Extender to write the output to
      * @param throwable         The {@link Throwable} to print the stacktrace of
      */
-    public static void printStackTrace(@Nonnull final IBurpExtenderCallbacks extenderCallbacks,
-                                       @Nonnull final Throwable throwable) {
+    public static void printStackTrace(final IBurpExtenderCallbacks extenderCallbacks,
+                                       final Throwable throwable) {
         try (final PrintWriter printWriter = new PrintWriter(extenderCallbacks.getStderr())) {
             throwable.printStackTrace(printWriter);
         }
