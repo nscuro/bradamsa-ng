@@ -10,7 +10,7 @@ install:
   - ./mvnw test-compile -DskipTests
 
 script:
-  - ./mvnw test jacoco:report
+  - ./mvnw package jacoco:report
 
 after_success:
   - ./mvnw coveralls:report
