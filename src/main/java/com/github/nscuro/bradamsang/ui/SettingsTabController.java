@@ -221,10 +221,17 @@ public class SettingsTabController implements ITab {
     }
 
     private void autoDetectAndApplyRadamsaCommand() {
+        final String radamsaBinaryPath;
+
         if (model.isWslAvailableAndEnabled()) {
-            model.setRadamsaCommand(findRadamsaBinaryInWslPath().orElse(null));
+            radamsaBinaryPath = findRadamsaBinaryInWslPath().orElse(null);
         } else {
-            model.setRadamsaCommand(findRadamsaBinaryInPath().orElse(null));
+            radamsaBinaryPath = findRadamsaBinaryInPath().orElse(null);
+        }
+
+        if (radamsaBinaryPath != null) {
+            extenderCallbacks.printOutput("Radamsa binary was found at " + radamsaBinaryPath);
+            model.setRadamsaCommand(radamsaBinaryPath);
         }
     }
 
