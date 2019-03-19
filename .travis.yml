@@ -15,7 +15,7 @@ script:
 after_success:
   - ./mvnw coveralls:report
   - wget -c https://raw.githubusercontent.com/probonopd/uploadtool/3bf89c3cf3de8f8eee8b48ab0242597d72115d1d/upload.sh
-  - bash upload.sh ./target/*.jar ./target/*.sha256
+  - bash upload.sh ./target/*-jar-with-dependencies.*
 
 branches:
   except:
