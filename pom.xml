@@ -32,7 +32,7 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
         <!-- Dependency versions -->
-        <burp-extender-api.version>1.7.22</burp-extender-api.version>
+        <burp-extender-api.version>2.1</burp-extender-api.version>
         <apache-commons-lang3.version>3.8.1</apache-commons-lang3.version>
         <apache-commons-io.version>2.6</apache-commons-io.version>
         <lombok.version>1.18.6</lombok.version>
