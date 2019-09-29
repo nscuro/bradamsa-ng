@@ -6,7 +6,7 @@ import burp.IIntruderPayloadProcessor;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-class IntruderPayloadProcessor implements IIntruderPayloadProcessor {
+final class IntruderPayloadProcessor implements IIntruderPayloadProcessor {
 
     private final IBurpExtenderCallbacks extenderCallbacks;
 

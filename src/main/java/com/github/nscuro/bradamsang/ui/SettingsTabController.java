@@ -1,9 +1,8 @@
 package com.github.nscuro.bradamsang.ui;
 
-import burp.IBurpExtenderCallbacks;
 import burp.ITab;
 import com.github.nscuro.bradamsang.BurpExtension;
-import com.github.nscuro.bradamsang.BurpUtils;
+import com.github.nscuro.bradamsang.BurpLogger;
 import com.github.nscuro.bradamsang.io.WslCommandExecutor;
 import com.github.nscuro.bradamsang.wsl.WslException;
 import com.github.nscuro.bradamsang.wsl.WslHelper;
@@ -31,7 +30,7 @@ import java.util.regex.Pattern;
 import static com.github.nscuro.bradamsang.ui.DocumentChangedListener.addDocumentChangedListener;
 import static java.lang.String.format;
 
-public class SettingsTabController implements ITab {
+public final class SettingsTabController implements ITab {
 
     private static final Pattern RADAMSA_COMMAND_PATTERN = Pattern.compile("^\\S*radamsa(?:\\.[a-z]{1,3})?$", Pattern.CASE_INSENSITIVE);
 
@@ -43,17 +42,17 @@ public class SettingsTabController implements ITab {
 
     private final SettingsTabView view;
 
-    private final IBurpExtenderCallbacks extenderCallbacks;
+    private final BurpLogger burpLogger;
 
     private final WslHelper wslHelper;
 
     public SettingsTabController(final SettingsTabModel model,
                                  final SettingsTabView view,
-                                 final IBurpExtenderCallbacks extenderCallbacks,
+                                 final BurpLogger burpLogger,
                                  final WslHelper wslHelper) {
         this.model = model;
         this.view = view;
-        this.extenderCallbacks = extenderCallbacks;
+        this.burpLogger = burpLogger;
         this.wslHelper = wslHelper;
     }
 
@@ -96,10 +95,10 @@ public class SettingsTabController implements ITab {
                 final List<String> wslDistros = wslHelper.getAvailableDistributions();
 
                 if (wslDistros.isEmpty()) {
-                    extenderCallbacks.printOutput("WSL is available, but no installed distributions have been found");
+                    burpLogger.info("WSL is available, but no installed distributions have been found");
                     model.setWslAvailable(false);
                 } else {
-                    extenderCallbacks.printOutput(format("WSL is available and the following distributions "
+                    burpLogger.info(format("WSL is available and the following distributions "
                             + "have been found: %s", wslDistros));
                     model.setWslAvailable(true);
                     model.setAvailableWslDistros(wslDistros);
@@ -108,7 +107,7 @@ public class SettingsTabController implements ITab {
                 model.setWslAvailable(false);
             }
         } catch (IOException e) {
-            BurpUtils.printStackTrace(extenderCallbacks, e);
+            burpLogger.error(e);
             view.showErrorDialog(format("Was unable to determine if WSL is available: %s", e.getMessage()));
             model.setWslAvailable(false);
         }
@@ -215,7 +214,7 @@ public class SettingsTabController implements ITab {
         try {
             return wslHelper.which("radamsa");
         } catch (IOException | WslException e) {
-            BurpUtils.printStackTrace(extenderCallbacks, e);
+            burpLogger.error(e);
             return Optional.empty();
         }
     }
@@ -230,7 +229,7 @@ public class SettingsTabController implements ITab {
         }
 
         if (radamsaBinaryPath != null) {
-            extenderCallbacks.printOutput("Radamsa binary was found at " + radamsaBinaryPath);
+            burpLogger.info("Radamsa binary was found at " + radamsaBinaryPath);
         }
         model.setRadamsaCommand(radamsaBinaryPath);
     }

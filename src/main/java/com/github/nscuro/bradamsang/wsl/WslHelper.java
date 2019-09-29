@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-public class WslHelper {
+public final class WslHelper {
 
     static final String OS_NAME_WINDOWS_10 = "Windows 10";
 

@@ -14,7 +14,7 @@ import java.util.Optional;
 
 @ToString
 @Getter(AccessLevel.PACKAGE)
-public class SettingsTabModel extends Observable implements OptionsProvider {
+public final class SettingsTabModel extends Observable implements OptionsProvider {
 
     private String radamsaCommand;
 

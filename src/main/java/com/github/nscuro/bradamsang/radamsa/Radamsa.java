@@ -12,7 +12,7 @@ import java.util.Optional;
 
 import static java.lang.String.format;
 
-public class Radamsa {
+public final class Radamsa {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(Radamsa.class);
 

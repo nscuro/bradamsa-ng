@@ -6,7 +6,7 @@ import javax.annotation.Nonnull;
 import java.util.Optional;
 
 @Data
-public class ExecutionResult {
+public final class ExecutionResult {
 
     private final int exitCode;
 

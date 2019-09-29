@@ -12,7 +12,7 @@ import com.github.nscuro.bradamsang.wsl.WslPathConverter;
 
 import javax.annotation.Nonnull;
 
-class IntruderPayloadGeneratorFactory implements IIntruderPayloadGeneratorFactory {
+final class IntruderPayloadGeneratorFactory implements IIntruderPayloadGeneratorFactory {
 
     private final IBurpExtenderCallbacks extenderCallbacks;
 
@@ -49,7 +49,7 @@ class IntruderPayloadGeneratorFactory implements IIntruderPayloadGeneratorFactor
             throw new IllegalStateException("No Radamsa command provided");
         }
 
-        return new IntruderPayloadGenerator(extenderCallbacks, optionsProvider, new WslPathConverter(),
+        return new IntruderPayloadGenerator(new BurpLogger(extenderCallbacks), optionsProvider, new WslPathConverter(),
                 new Radamsa(commandExecutor, optionsProvider.getRadamsaCommand().get()));
     }
 

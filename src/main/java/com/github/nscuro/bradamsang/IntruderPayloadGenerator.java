@@ -1,6 +1,5 @@
 package com.github.nscuro.bradamsang;
 
-import burp.IBurpExtenderCallbacks;
 import burp.IIntruderPayloadGenerator;
 import com.github.nscuro.bradamsang.radamsa.Parameters;
 import com.github.nscuro.bradamsang.radamsa.Radamsa;
@@ -22,11 +21,11 @@ import java.util.Optional;
 
 import static java.lang.String.format;
 
-class IntruderPayloadGenerator implements IIntruderPayloadGenerator {
+final class IntruderPayloadGenerator implements IIntruderPayloadGenerator {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(IntruderPayloadGenerator.class);
 
-    private final IBurpExtenderCallbacks extenderCallbacks;
+    private final BurpLogger burpLogger;
 
     private final OptionsProvider optionsProvider;
 
@@ -42,11 +41,11 @@ class IntruderPayloadGenerator implements IIntruderPayloadGenerator {
 
     private boolean firstRun = true;
 
-    IntruderPayloadGenerator(final IBurpExtenderCallbacks extenderCallbacks,
+    IntruderPayloadGenerator(final BurpLogger burpLogger,
                              final OptionsProvider optionsProvider,
                              final WslPathConverter wslPathConverter,
                              final Radamsa radamsa) {
-        this.extenderCallbacks = extenderCallbacks;
+        this.burpLogger = burpLogger;
         this.optionsProvider = optionsProvider;
         this.wslPathConverter = wslPathConverter;
         this.radamsa = radamsa;
@@ -62,7 +61,7 @@ class IntruderPayloadGenerator implements IIntruderPayloadGenerator {
     @Override
     public byte[] getNextPayload(@Nullable final byte[] baseValue) {
         if (baseValue == null) {
-            extenderCallbacks.printError("No baseValue provided. "
+            burpLogger.error("No baseValue provided. "
                     + "Be aware that you can't use bradamsa-ng with the battering ram attack!");
 
             return null;
@@ -76,16 +75,14 @@ class IntruderPayloadGenerator implements IIntruderPayloadGenerator {
                 payloadFilesDirectoryPath = Files.createTempDirectory("bradamsa-ng_");
                 payloadFilesDirectoryPath.toFile().deleteOnExit();
             } catch (IOException e) {
-                BurpUtils.printStackTrace(extenderCallbacks, e);
-
+                burpLogger.error(e);
                 return null;
             }
 
             try {
                 generatePayloads(baseValue);
             } catch (RadamsaException e) {
-                BurpUtils.printStackTrace(extenderCallbacks, e);
-
+                burpLogger.error(e);
                 return null;
             }
 
@@ -98,7 +95,7 @@ class IntruderPayloadGenerator implements IIntruderPayloadGenerator {
                     .ifPresent(payloadFiles::addAll);
 
             if (payloadFiles.isEmpty()) {
-                extenderCallbacks.printError(format("No payload files have been found in \"%s\"", payloadFilesDirectoryPath));
+                burpLogger.error(format("No payload files have been found in \"%s\"", payloadFilesDirectoryPath));
 
                 return null;
             }
@@ -109,13 +106,12 @@ class IntruderPayloadGenerator implements IIntruderPayloadGenerator {
             byte[] payload = Files.readAllBytes(file.toPath());
 
             if (!file.delete()) {
-                extenderCallbacks.printError(format("\"%s\" was not deleted", file));
+                burpLogger.error(format("\"%s\" was not deleted", file));
             }
 
             return payload;
         } catch (IOException e) {
-            BurpUtils.printStackTrace(extenderCallbacks, e);
-
+            burpLogger.error(e);
             return null;
         }
     }

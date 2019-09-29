@@ -7,7 +7,7 @@ import java.nio.file.Path;
 
 @Data
 @Builder
-public class Parameters {
+public final class Parameters {
 
     private final Integer count;
 

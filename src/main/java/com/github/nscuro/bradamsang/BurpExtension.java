@@ -18,7 +18,7 @@ public class BurpExtension {
         final SettingsTabView settingsTabView = new SettingsTabView();
 
         final SettingsTabController tab = new SettingsTabController(settingsTabModel, settingsTabView,
-                extenderCallbacks, new WslHelper(new NativeCommandExecutor(), null));
+                new BurpLogger(extenderCallbacks), new WslHelper(new NativeCommandExecutor(), null));
 
         extenderCallbacks.addSuiteTab(tab);
 

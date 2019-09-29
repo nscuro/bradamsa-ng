@@ -8,7 +8,7 @@ import java.util.regex.Pattern;
 
 import static java.lang.String.format;
 
-public class WslPathConverter {
+public final class WslPathConverter {
 
     private static final Pattern DRIVE_LETTER_PATTERN = Pattern.compile("^([a-zA-Z]):\\\\");
 

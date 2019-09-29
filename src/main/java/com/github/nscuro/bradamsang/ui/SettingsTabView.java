@@ -27,7 +27,7 @@ import java.util.Observer;
 import java.util.Optional;
 
 @Getter(AccessLevel.PACKAGE)
-public class SettingsTabView implements Observer {
+public final class SettingsTabView implements Observer {
 
     private JPanel mainPanel;
 
