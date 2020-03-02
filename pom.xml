@@ -41,7 +41,7 @@
         <slf4j.version>1.7.30</slf4j.version>
         <junit-jupiter.version>5.6.0</junit-jupiter.version>
         <junit-platform.version>1.6.0</junit-platform.version>
-        <assertj-version>3.14.0</assertj-version>
+        <assertj-version>3.15.0</assertj-version>
         <mockito.version>3.2.4</mockito.version>
 
         <!-- Plugin versions -->
