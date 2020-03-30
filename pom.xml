@@ -33,7 +33,7 @@
 
         <!-- Dependency versions -->
         <burp-extender-api.version>2.1</burp-extender-api.version>
-        <apache-commons-lang3.version>3.9</apache-commons-lang3.version>
+        <apache-commons-lang3.version>3.10</apache-commons-lang3.version>
         <apache-commons-io.version>2.6</apache-commons-io.version>
         <lombok.version>1.18.12</lombok.version>
         <findbugs-jsr305.version>3.0.2</findbugs-jsr305.version>
