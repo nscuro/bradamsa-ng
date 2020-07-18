@@ -4,7 +4,7 @@
 
     <groupId>com.github.nscuro</groupId>
     <artifactId>bradamsa-ng</artifactId>
-    <version>1.0.0</version>
+    <version>1.0.1-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <name>bradamsa-ng</name>
@@ -22,7 +22,7 @@
         <connection>scm:git:git@github.com:nscuro/bradamsa-ng.git</connection>
         <developerConnection>scm:git:git@github.com:nscuro/bradamsa-ng.git</developerConnection>
         <url>https://github.com/nscuro/bradamsa-ng/tree/master</url>
-        <tag>bradamsa-ng-1.0.0</tag>
+        <tag>HEAD</tag>
     </scm>
 
     <issueManagement>
