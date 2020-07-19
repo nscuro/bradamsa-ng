@@ -7,7 +7,7 @@ import com.github.nscuro.bradamsang.intruder.PayloadProcessorFactory;
 import com.github.nscuro.bradamsang.ui.SettingsTab;
 import com.github.nscuro.bradamsang.util.BurpLogger;
 
-public final class BurpExtension {
+public class BurpExtension {
 
     public static final String EXTENSION_NAME = "bradamsa-ng";
 
