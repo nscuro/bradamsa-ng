@@ -1,107 +1,79 @@
 package com.github.nscuro.bradamsang.radamsa;
 
-import com.github.nscuro.bradamsang.io.CommandExecutor;
-import com.github.nscuro.bradamsang.io.ExecutionResult;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.github.nscuro.bradamsang.command.CommandExecutor;
+import com.github.nscuro.bradamsang.command.ExecutionResult;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
-
-import static java.lang.String.format;
 
 public final class Radamsa {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(Radamsa.class);
-
     private final CommandExecutor commandExecutor;
+    private final String executablePath;
 
-    private final String radamsaCommand;
-
-    public Radamsa(final CommandExecutor commandExecutor, final String radamsaCommand) {
+    public Radamsa(final CommandExecutor commandExecutor, final String executablePath) {
         this.commandExecutor = commandExecutor;
-        this.radamsaCommand = radamsaCommand;
+        this.executablePath = executablePath;
     }
 
-    public void fuzz(final Parameters parameters) throws RadamsaException {
-        if (!isValidRadamsaCommand(radamsaCommand)) {
-            throw new RadamsaException(format("\"%s\" is not a valid radamsa command", radamsaCommand));
-        } else if (parameters.getBaseValue() == null) {
-            throw new RadamsaException("No baseValue provided");
-        } else if (parameters.getOutputDirectoryPath() == null) {
-            throw new RadamsaException("No output directory path provided");
+    /**
+     * Generate a test case based on a given sample or one or more sample files.
+     * <p>
+     * When both {@link RadamsaParameters#getSample()} and {@link RadamsaParameters#getSamplePaths()}
+     * are provided, {@link RadamsaParameters#getSample()} takes precedence.
+     *
+     * @param parameters A {@link RadamsaParameters} object
+     * @return The generated test case as byte array
+     * @throws IOException When the invocation of Radamsa failed
+     */
+    public byte[] fuzz(final RadamsaParameters parameters) throws IOException {
+        if (parameters == null) {
+            throw new IllegalArgumentException("No parameters provided");
+        } else if (parameters.getSample().isEmpty() && parameters.getSamplePaths().isEmpty()) {
+            throw new IllegalArgumentException("No sample data provided");
         }
 
-        final List<String> commandLine = new ArrayList<>(CommandExecutor.parseCommand(radamsaCommand));
+        final var radamsaCommand = new ArrayList<String>();
+        radamsaCommand.add(executablePath);
 
-        Optional
-                .ofNullable(parameters.getCount())
-                .filter(count -> count > 0)
-                .ifPresent(count -> {
-                    commandLine.add("-n");
-                    commandLine.add(String.valueOf(count));
-                });
-
-        Optional
-                .ofNullable(parameters.getSeed())
-                .ifPresent(seed -> {
-                    commandLine.add("-s");
-                    commandLine.add(String.valueOf(seed));
-                });
-
-        final String outputPattern = parameters
-                .getOutputDirectoryPath()
-                .resolve("radamsa_%n.out")
-                .toString()
-                .replace("\\", "/");
-
-        commandLine.add("-o");
-        commandLine.add(outputPattern);
-
-        try {
-            commandExecutor.execute(commandLine, parameters.getBaseValue());
-        } catch (IOException e) {
-            throw new RadamsaException("Failed to execute radamsa", e);
-        }
-    }
-
-    boolean isValidRadamsaCommand(final String command) throws RadamsaException {
-        if (command == null || command.trim().isEmpty()) {
-            return false;
-        } else if (!command.matches("^.*radamsa(\\.[a-zA-Z]+)?$")) {
-            return false;
-        }
-
-        final List<String> versionCommand = CommandExecutor.parseCommand(command);
-        versionCommand.add("-V");
-
-        final Optional<String> radamsaVersion;
-        try {
-            final ExecutionResult executionResult = commandExecutor.execute(versionCommand);
-
-            if (executionResult.getExitCode() != 0) {
-                return false;
-            }
-
-            radamsaVersion = executionResult.getOutput()
-                    .filter(output -> output.toLowerCase().startsWith("radamsa"))
-                    .map(output -> output.split(" ", 3))
-                    .map(outputParts -> outputParts[1]);
-        } catch (IOException e) {
-            throw new RadamsaException(e);
-        }
-
-        if (radamsaVersion.isPresent()) {
-            LOGGER.debug("Detected radamsa v{}", radamsaVersion.get());
-
-            return true;
+        final ExecutionResult executionResult;
+        if (parameters.getSample().isPresent()) {
+            executionResult = commandExecutor.execute(radamsaCommand, parameters.getSample().get());
         } else {
-            LOGGER.warn("Unable to determine version of radamsa");
+            radamsaCommand.add("--recursive");
+            radamsaCommand.addAll(parameters.getSamplePaths());
 
-            return false;
+            executionResult = commandExecutor.execute(radamsaCommand);
         }
+
+        if (executionResult.getExitCode() != 0) {
+            throw new IOException("Radamsa execution failed with exit code " + executionResult.getExitCode());
+        }
+
+        return executionResult.getStdoutOutput()
+                .map(String::getBytes)
+                .orElseThrow(IllegalStateException::new);
+    }
+
+    /**
+     * @return The version of Radamsa
+     * @throws IOException When the invocation of Radamsa failed
+     */
+    public String getVersion() throws IOException {
+        final var command = List.of(executablePath, "-V");
+        final ExecutionResult executionResult = commandExecutor.execute(command);
+
+        if (executionResult.getExitCode() != 0) {
+            throw new IOException("Radamsa execution failed with exit code " + executionResult.getExitCode());
+        }
+
+        return executionResult.getStdoutOutput()
+                .map(String::trim)
+                .map(output -> output.split(" ", 2))
+                .filter(outputParts -> outputParts.length == 2)
+                .map(outputParts -> outputParts[1])
+                .orElseThrow(() -> new IOException("Missing or unexpected output for command " + command));
     }
 
 }
