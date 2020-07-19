@@ -19,7 +19,7 @@ jobs:
       - name: Build
         run: mvn -B clean compile test-compile
       - name: Test
-        run: mvn -B verify
+        run: mvn -B verify jacoco:report
       - name: Package
         run: mvn -B package
       - name: Report Test Coverage
