@@ -40,7 +40,7 @@
         <burp-extender-api.version>2.1</burp-extender-api.version>
         <apache-commons-lang3.version>3.11</apache-commons-lang3.version>
         <apache-commons-io.version>2.7</apache-commons-io.version>
-        <lombok.version>1.18.12</lombok.version>
+        <lombok.version>1.18.16</lombok.version>
         <findbugs-jsr305.version>3.0.2</findbugs-jsr305.version>
         <intellij-forms-rt.version>7.0.3</intellij-forms-rt.version>
         <slf4j.version>1.7.30</slf4j.version>
