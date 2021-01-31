@@ -4,6 +4,7 @@ import burp.IBurpExtenderCallbacks;
 import burp.IIntruderAttack;
 import burp.IIntruderPayloadGenerator;
 import burp.IIntruderPayloadGeneratorFactory;
+import com.github.nscuro.bradamsang.BurpLogger.LogLevel;
 import com.github.nscuro.bradamsang.io.CommandExecutor;
 import com.github.nscuro.bradamsang.io.NativeCommandExecutor;
 import com.github.nscuro.bradamsang.io.WslCommandExecutor;
@@ -49,7 +50,7 @@ final class IntruderPayloadGeneratorFactory implements IIntruderPayloadGenerator
             throw new IllegalStateException("No Radamsa command provided");
         }
 
-        return new IntruderPayloadGenerator(new BurpLogger(extenderCallbacks), optionsProvider, new WslPathConverter(),
+        return new IntruderPayloadGenerator(new BurpLogger(extenderCallbacks, LogLevel.DEBUG), optionsProvider, new WslPathConverter(),
                 new Radamsa(commandExecutor, optionsProvider.getRadamsaCommand().get()));
     }
 
