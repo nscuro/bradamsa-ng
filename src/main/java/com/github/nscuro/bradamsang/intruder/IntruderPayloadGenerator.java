@@ -50,6 +50,7 @@ public final class IntruderPayloadGenerator implements IIntruderPayloadGenerator
 
     @Override
     public void reset() {
+        logger.debug("Resetting payload generator");
         payloadsGenerated = 0;
     }
 

@@ -28,7 +28,10 @@ public final class IntruderPayloadGeneratorFactory implements IIntruderPayloadGe
     }
 
     @Override
-    public IIntruderPayloadGenerator createNewInstance(final IIntruderAttack iIntruderAttack) {
+    public IIntruderPayloadGenerator createNewInstance(final IIntruderAttack intruderAttack) {
+        final var attackOptions = IntruderAttackOptions.fromSettings(settingsProvider);
+        logger.debug("Creating new payload generator with " + attackOptions);
+
         return new IntruderPayloadGenerator(
                 radamsaExecutorFactory.create(settingsProvider),
                 IntruderAttackOptions.fromSettings(settingsProvider),

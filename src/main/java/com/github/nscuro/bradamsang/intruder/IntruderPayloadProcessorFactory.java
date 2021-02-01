@@ -39,6 +39,7 @@ public final class IntruderPayloadProcessorFactory implements IIntruderPayloadPr
         if (payloadProcessor == null) {
             synchronized (this) {
                 if (payloadProcessor == null) {
+                    logger.debug("Creating initial payload processor");
                     payloadProcessor = new IntruderPayloadProcessor(radamsaExecutorFactory.create(settingsProvider), logger);
                     return payloadProcessor;
                 }
@@ -50,6 +51,7 @@ public final class IntruderPayloadProcessorFactory implements IIntruderPayloadPr
         if (settingsHashCode != currentSettingsHashCode) {
             synchronized (this) {
                 if (settingsHashCode != currentSettingsHashCode) {
+                    logger.debug("Settings changed, creating new payload processor");
                     payloadProcessor = new IntruderPayloadProcessor(radamsaExecutorFactory.create(settingsProvider), logger);
                     currentSettingsHashCode = settingsHashCode;
                     return payloadProcessor;

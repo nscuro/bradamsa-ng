@@ -49,4 +49,14 @@ public final class IntruderAttackOptions {
         return Optional.ofNullable(wslDistributionName);
     }
 
+    @Override
+    public String toString() {
+        return "IntruderAttackOptions{" +
+                "payloadCount=" + payloadCount +
+                ", samplePaths=" + samplePaths +
+                ", wslModeEnabled=" + wslModeEnabled +
+                ", wslDistributionName='" + wslDistributionName + '\'' +
+                '}';
+    }
+
 }
