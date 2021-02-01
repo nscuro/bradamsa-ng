@@ -12,6 +12,11 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import static java.lang.String.format;
+
+/**
+ * {@link WslSupport} provides various useful methods for working with WSL.
+ */
 public final class WslSupport {
 
     private static final Pattern WSL_LIST_OUTPUT_COLUMNS_PATTERN =
@@ -27,17 +32,27 @@ public final class WslSupport {
         return "Windows 10".equals(System.getProperty("os.name"));
     }
 
+    /**
+     * Determines whether or not WSL is available on this system.
+     *
+     * @return {@code true} when WSL is available, otherwise {@code false}
+     * @throws IOException
+     */
     public boolean isWslAvailable() throws IOException {
         return isWindows10()
                 && commandExecutor.execute(List.of("where.exe", "/q", "wsl.exe")).getExitCode() == 0;
     }
 
+    /**
+     * @return
+     * @throws IOException
+     */
     public List<WslDistribution> getInstalledDistributions() throws IOException {
         final ExecutionResult executionResult =
                 commandExecutor.execute(List.of("wsl.exe", "--list", "--verbose"));
 
         if (executionResult.getExitCode() != 0) {
-            throw new IOException();
+            throw new IOException("Execution failed with exit code " + executionResult.getExitCode());
         } else if (executionResult.getStdoutOutput().isEmpty()) {
             return Collections.emptyList();
         }
@@ -73,6 +88,24 @@ public final class WslSupport {
         }
 
         return Optional.of(new WslDistribution(lineParts[0], isDefault, wslVersion));
+    }
+
+    /**
+     * Converts a given absolute Windows path to its WSL equivalent.
+     *
+     * @param windowsPath The path to convert
+     * @return The converted path
+     * @throws IllegalArgumentException When {@code windowsPath} is not a valid, absolute Windows path
+     */
+    public String convertToWslPath(final String windowsPath) {
+        final Matcher driveLetterMatcher = Pattern.compile("^([a-zA-Z]):\\\\").matcher(windowsPath);
+
+        if (!driveLetterMatcher.find() || driveLetterMatcher.groupCount() != 1) {
+            throw new IllegalArgumentException(format("%s is not a valid absolute Windows path", windowsPath));
+        }
+
+        return "/mnt/" + driveLetterMatcher.group(1).toLowerCase() +
+                "/" + driveLetterMatcher.replaceFirst("").replaceAll("\\\\", "/");
     }
 
 }

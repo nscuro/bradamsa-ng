@@ -4,7 +4,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
-public class RadamsaOptions {
+public final class RadamsaOptions {
 
     private final byte[] sample;
     private final List<String> samplePaths;

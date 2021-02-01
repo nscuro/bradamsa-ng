@@ -10,17 +10,13 @@ import static org.mockito.Mockito.verify;
 class BurpExtenderTest {
 
     private IBurpExtenderCallbacks extenderCallbacksMock;
-
     private BurpExtension burpExtensionMock;
-
     private BurpExtender burpExtender;
 
     @BeforeEach
     void beforeEach() {
         extenderCallbacksMock = mock(IBurpExtenderCallbacks.class);
-
         burpExtensionMock = mock(BurpExtension.class);
-
         burpExtender = new BurpExtender(burpExtensionMock);
     }
 

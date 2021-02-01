@@ -5,7 +5,7 @@ import org.apache.commons.io.IOUtils;
 import java.io.IOException;
 import java.util.List;
 
-public class NativeCommandExecutor implements CommandExecutor {
+public final class NativeCommandExecutor implements CommandExecutor {
 
     @Override
     public ExecutionResult execute(final List<String> command, final byte[] inputData) throws IOException {

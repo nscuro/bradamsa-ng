@@ -10,6 +10,7 @@ public class BurpExtender implements IBurpExtender {
         this.burpExtension = burpExtension;
     }
 
+    @SuppressWarnings("unused")
     public BurpExtender() {
         this(new BurpExtension());
     }

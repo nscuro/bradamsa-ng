@@ -2,7 +2,7 @@ package com.github.nscuro.bradamsang.command;
 
 import java.util.Optional;
 
-public class ExecutionResult {
+public final class ExecutionResult {
 
     private final int exitCode;
     private final byte[] stdoutOutput;

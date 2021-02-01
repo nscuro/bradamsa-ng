@@ -1,5 +1,8 @@
 package com.github.nscuro.bradamsang.wsl;
 
+/**
+ * @since 1.1.0
+ */
 public final class WslDistribution {
 
     private final String name;

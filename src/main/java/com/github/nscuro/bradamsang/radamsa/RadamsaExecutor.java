@@ -8,7 +8,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
-public class RadamsaExecutor {
+public final class RadamsaExecutor {
 
     private final CommandExecutor commandExecutor;
     private final String executablePath;
@@ -18,6 +18,12 @@ public class RadamsaExecutor {
         this.executablePath = executablePath;
     }
 
+    /**
+     * @param options
+     * @return
+     * @throws IOException
+     * @throws IllegalArgumentException
+     */
     public byte[] execute(final RadamsaOptions options) throws IOException {
         if (options == null) {
             throw new IllegalArgumentException("No options provided");
@@ -44,6 +50,10 @@ public class RadamsaExecutor {
         return executionResult.getStdoutOutput().orElse(null);
     }
 
+    /**
+     * @return
+     * @throws IOException
+     */
     public String getRadamsaVersion() throws IOException {
         final var command = List.of(executablePath, "-V");
         final ExecutionResult executionResult = commandExecutor.execute(command);

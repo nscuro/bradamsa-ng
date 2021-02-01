@@ -2,11 +2,9 @@ package com.github.nscuro.bradamsang;
 
 import burp.IBurpExtenderCallbacks;
 import com.github.nscuro.bradamsang.BurpLogger.LogLevel;
-import com.github.nscuro.bradamsang.io.NativeCommandExecutor;
-import com.github.nscuro.bradamsang.ui.SettingsTabController;
-import com.github.nscuro.bradamsang.ui.SettingsTabModel;
-import com.github.nscuro.bradamsang.ui.SettingsTabView;
-import com.github.nscuro.bradamsang.wsl.WslHelper;
+import com.github.nscuro.bradamsang.intruder.IntruderPayloadGeneratorFactory;
+import com.github.nscuro.bradamsang.intruder.IntruderPayloadProcessorFactory;
+import com.github.nscuro.bradamsang.radamsa.RadamsaExecutorFactory;
 
 public class BurpExtension {
 
@@ -15,19 +13,23 @@ public class BurpExtension {
     public void registerExtension(final IBurpExtenderCallbacks extenderCallbacks) {
         extenderCallbacks.setExtensionName(EXTENSION_NAME);
 
-        final SettingsTabModel settingsTabModel = new SettingsTabModel();
-        final SettingsTabView settingsTabView = new SettingsTabView();
+        final var logger = new BurpLogger(extenderCallbacks, LogLevel.DEBUG);
+        final var radamsaExecutorFactory = new RadamsaExecutorFactory();
+        final BurpExtensionSettingsProvider settingsProvider = null;
 
-        final SettingsTabController tab = new SettingsTabController(settingsTabModel, settingsTabView,
-                new BurpLogger(extenderCallbacks, LogLevel.DEBUG), new WslHelper(new NativeCommandExecutor(), null));
+        logger.debug("Registering intruder payload generator factory");
+        extenderCallbacks.registerIntruderPayloadGeneratorFactory(new IntruderPayloadGeneratorFactory(
+                radamsaExecutorFactory,
+                settingsProvider,
+                logger
+        ));
 
-        extenderCallbacks.addSuiteTab(tab);
-
-        extenderCallbacks.registerIntruderPayloadGeneratorFactory(
-                new IntruderPayloadGeneratorFactory(extenderCallbacks, settingsTabModel));
-
-        extenderCallbacks.registerIntruderPayloadProcessor(
-                new IntruderPayloadProcessor(extenderCallbacks, settingsTabModel));
+        logger.debug("Registering intruder payload processor factory");
+        extenderCallbacks.registerIntruderPayloadProcessor(new IntruderPayloadProcessorFactory(
+                radamsaExecutorFactory,
+                settingsProvider,
+                logger
+        ));
     }
 
 }
